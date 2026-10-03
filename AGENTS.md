@@ -1,21 +1,48 @@
 # Autonomous Agent Guidelines & Budget Guardrails
 
-## 1. Autonomous Task Lifecycle
-When picking up issues from GitHub (`BowenMichael/f1-frontend`):
+## 1. Autonomous Task Lifecycle & Worktree Isolation
+
+### A. Issue Takeover Notification
+When picking up an issue from GitHub (`BowenMichael/f1-frontend`):
 1. **Selection**: Look for issues labeled `agent:ready`.
 2. **State Transition**:
    - Remove label `agent:ready`.
    - Add label `agent:in-progress`.
-   - Post an initial comment acknowledging task start with the planned implementation steps.
-3. **Branching**:
-   - Create a git feature branch: `feat/issue-<number>-<short-description>`.
-4. **Development & Verification**:
-   - Implement features adhering strictly to Mantine UI v7, TypeScript, and OpenF1 guidelines.
-   - Run typechecks and tests in the background (suppressing noisy logs to temporary files).
-5. **Visual Media & PR**:
-   - Launch dev server, record interactive UI video using `browser_subagent`, and capture screenshots.
-   - Push branch and open a Pull Request using the repository PR template.
-   - Tag label `agent:review` on the issue and link the PR.
+3. **Mandatory Issue Takeover Comment**:
+   The agent **MUST immediately comment** on the GitHub issue to notify the team that work has begun:
+   ```markdown
+   🤖 **Agent Takeover: Development Started**
+
+   - **Worktree**: `.worktrees/issue-<number>`
+   - **Branch**: `feat/issue-<number>-<short-description>`
+   - **Target Session / Endpoint**: [e.g. OpenF1 Drivers/Sessions]
+   - **Planned Approach**:
+     1. [Step 1: Interface / Schema definition]
+     2. [Step 2: Component implementation]
+     3. [Step 3: Verification & demo video recording]
+   - **Budget Guardrail**: Max 15 tool execution turns before pause & approval.
+   ```
+
+### B. Git Worktree Isolation (Strictly Required)
+To prevent interference with the user's active editor, other agent sessions, or local uncommitted changes:
+1. **Never work in the root directory**: All feature development must occur in an isolated Git worktree.
+2. **Worktree Creation**:
+   ```bash
+   git worktree add -b feat/issue-<number>-<short-description> .worktrees/issue-<number> master
+   ```
+3. **Execution**:
+   - All file edits, typechecks, component creation, and commits must be scoped to `.worktrees/issue-<number>`.
+4. **Completion & Cleanup**:
+   - Push the branch from the worktree:
+     ```bash
+     git push origin feat/issue-<number>-<short-description>
+     ```
+   - Open the Pull Request linking to the issue with demo video and screenshots.
+   - Clean up the worktree once the branch is pushed:
+     ```bash
+     git worktree remove .worktrees/issue-<number>
+     ```
+   - Tag the issue with `agent:review`.
 
 ---
 
