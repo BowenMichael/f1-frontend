@@ -1,38 +1,80 @@
-# Mantine Next.js template
+# 🏎️ F1 Viewer
 
-This is a template for [Next.js](https://nextjs.org/) pages router + [Mantine](https://mantine.dev/).
-If you want to use app router instead, see [next-app-template](https://github.com/mantinedev/next-app-template).
+An interactive Formula 1 dashboard and session explorer built with **Next.js 14**, **Mantine UI v7**, and the public **[OpenF1 API](https://openf1.org/)**.
 
-## Features
+Designed for an autonomous, issue-driven AI agent workflow managed through **GitHub Projects (Jira-style Kanban)** and **Model Context Protocol (MCP)**.
 
-This template comes with the following features:
+---
 
-- [PostCSS](https://postcss.org/) with [mantine-postcss-preset](https://mantine.dev/styles/postcss-preset)
-- [TypeScript](https://www.typescriptlang.org/)
-- [Storybook](https://storybook.js.org/)
-- [Jest](https://jestjs.io/) setup with [React Testing Library](https://testing-library.com/docs/react-testing-library/intro)
-- ESLint setup with [eslint-config-mantine](https://github.com/mantinedev/eslint-config-mantine)
+## ✨ Features
 
-## npm scripts
+- **Live & Historical F1 Data**: Powered by OpenF1 REST API (`api.openf1.org`) for session schedules, drivers, and race weekends.
+- **Driver Lineup Grid**: Responsive driver cards displaying driver number badges, team color indicators, headshots, country codes, and acronyms.
+- **Modern Mantine UI v7**: Beautiful dark/light mode, custom typography (Montserrat), and polished loading and alert states.
+- **Agent-Ready CI/CD**:
+  - 📋 **GitHub Projects Kanban Board** with Jira-style statuses (`Backlog`, `Ready for Agent`, `In Progress`, `In Review`, `Done`).
+  - 🤖 **Issue & PR Templates** requiring visual proof (video demos & before/after screenshots).
+  - ⚡ **GitHub Actions Dispatcher** automatically queuing tasks when labeled `agent:ready`.
 
-### Build and dev scripts
+---
 
-- `dev` – start dev server
-- `build` – bundle application for production
-- `export` – exports static website to `out` folder
-- `analyze` – analyzes application bundle with [@next/bundle-analyzer](https://www.npmjs.com/package/@next/bundle-analyzer)
+## 🛠️ Tech Stack
 
-### Testing scripts
+- **Framework**: [Next.js 14](https://nextjs.org/) (Pages Router)
+- **UI Components**: [Mantine UI v7](https://mantine.dev/)
+- **Icons**: [Tabler Icons](https://tabler-icons.io/)
+- **Language**: TypeScript
+- **Styling**: PostCSS with Mantine PostCSS presets
+- **Testing & Quality**: Jest, React Testing Library, Storybook 7, ESLint, Prettier
 
-- `typecheck` – checks TypeScript types
-- `lint` – runs ESLint
-- `prettier:check` – checks files with Prettier
-- `jest` – runs jest tests
-- `jest:watch` – starts jest watch
-- `test` – runs `jest`, `prettier:check`, `lint` and `typecheck` scripts
+---
 
-### Other scripts
+## 🚀 Getting Started
 
-- `storybook` – starts storybook dev server
-- `storybook:build` – build production storybook bundle to `storybook-static`
-- `prettier:write` – formats all files with Prettier
+### Prerequisites
+- Node.js 18+
+- npm or yarn
+
+### Installation
+```bash
+# Clone the repository
+git clone https://github.com/BowenMichael/f1-frontend.git
+cd f1-frontend
+
+# Install dependencies
+npm install
+```
+
+### Running Locally
+```bash
+npm run dev
+```
+Open [http://localhost:3000](http://localhost:3000) in your browser to view the application.
+
+---
+
+## 📋 Available Scripts
+
+| Command | Description |
+| :--- | :--- |
+| `npm run dev` | Start development server at `localhost:3000` |
+| `npm run build` | Build production bundle |
+| `npm run start` | Start production server |
+| `npm run typecheck` | Run TypeScript compiler checks |
+| `npm run lint` | Run ESLint and Stylelint |
+| `npm run test` | Run full test suite (lint, typecheck, prettier, jest) |
+| `npm run storybook` | Launch Storybook UI workshop on port 6006 |
+
+---
+
+## 🤖 Agent Management & Workflow
+
+This project is configured with a Jira-like workflow on [GitHub Projects](https://github.com/users/BowenMichael/projects/1):
+
+1. **Create an Issue**: Use the `[TASK]` template with acceptance criteria and visual recording requirements.
+2. **Agent Pick-Up**: The AI agent reads tickets via GitHub MCP and starts development on an isolated branch.
+3. **Pull Request with Video**: When the feature is complete, the agent opens a PR containing:
+   - 🎥 Video walkthrough of the UI behavior
+   - 📸 Before & after screenshots
+   - 🧪 Verification of TypeScript checks and tests
+4. **Review & Merge**: Review the code diffs and visual demo directly on GitHub to approve and merge.
