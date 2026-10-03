@@ -28,8 +28,10 @@ const TRACKED_FILES = [
   '.github/workflows/agent-task-dispatcher.yml',
   '.github/workflows/agent-template-sync.yml',
   'mcp_config.template.json',
+  'agent-manager.json',
   'scripts/agent-sync.js',
-  'docs/TEMPLATE_SYNC_GUIDE.md'
+  'docs/TEMPLATE_SYNC_GUIDE.md',
+  'docs/AGENT_MANAGER_INTEGRATION.md'
 ];
 
 // CLI Argument Parsing
@@ -58,358 +60,340 @@ for (let i = 0; i < args.length; i++) {
 function printHelp() {
   console.log(`
 🔄 Agent Template Synchronization CLI
-=======================================
-Keeps agent rules, workflows, and prompts in sync with upstream template:
-https://github.com/${upstreamRepo}
-
-Usage:
-  node scripts/agent-sync.js [command] [options]
 
 Commands:
-  --status            Inspect divergence between local and upstream files (default)
-  --pull              Pull latest template updates from upstream into local project
-  --push              Push local improvements back to upstream template repo
+  --status              Check sync status across all tracked files against upstream
+  --pull                Download newer template files from upstream into current repo
+  --push                Create a branch & PR proposing current changes back to upstream
+  --push --direct       Commit directly to upstream (requires push access)
 
 Options:
-  --upstream <repo>   Upstream repository slug (default: ${DEFAULT_UPSTREAM})
-  --branch <branch>   Upstream branch (default: ${DEFAULT_BRANCH})
-  --direct            Push directly to upstream default branch (if authorized)
-  --help, -h          Show this help message
-
-Examples:
-  node scripts/agent-sync.js --status
-  node scripts/agent-sync.js --pull
-  node scripts/agent-sync.js --push
-  npm run agent:sync:status
-`);
+  --upstream <repo>     Upstream repository (default: ${DEFAULT_UPSTREAM})
+  --branch <branch>     Upstream default branch (default: ${DEFAULT_BRANCH})
+  --help, -h            Show this help dialog
+  `);
 }
 
-// Find repository root
-function getRepoRoot() {
-  try {
-    return execSync('git rev-parse --show-toplevel', { encoding: 'utf8' }).trim();
-  } catch {
-    return process.cwd();
-  }
-}
-
-const REPO_ROOT = getRepoRoot();
-
-// Helper to get GitHub token from env or gh CLI
-function getAuthToken() {
+function getGitHubToken() {
   if (process.env.GITHUB_TOKEN) return process.env.GITHUB_TOKEN;
-  if (process.env.GH_TOKEN) return process.env.GH_TOKEN;
+  if (process.env.GITHUB_PERSONAL_ACCESS_TOKEN) return process.env.GITHUB_PERSONAL_ACCESS_TOKEN;
+  
+  // Check global MCP config
   try {
-    const token = execSync('gh auth token', { encoding: 'utf8', stdio: ['pipe', 'pipe', 'ignore'] }).trim();
-    if (token) return token;
-  } catch {
-    // Ignore error if gh not configured
+    const home = process.env.HOME || process.env.USERPROFILE;
+    const mcpConfigPath = path.join(home, '.gemini', 'config', 'mcp_config.json');
+    if (fs.existsSync(mcpConfigPath)) {
+      const config = JSON.parse(fs.readFileSync(mcpConfigPath, 'utf8'));
+      const token = config?.mcpServers?.github?.env?.GITHUB_PERSONAL_ACCESS_TOKEN;
+      if (token) return token;
+    }
+  } catch (err) {
+    // ignore
   }
+
+  // Fallback to git credential helper
+  try {
+    const stdout = execSync('git config --get github.token || echo ""', { encoding: 'utf8' }).trim();
+    if (stdout) return stdout;
+  } catch (e) {
+    // ignore
+  }
+
   return null;
 }
 
-// Fetch file from GitHub API / Raw content
-function fetchUpstreamFile(filePath) {
+function fetchUpstreamFile(filePath, repo, branch, token) {
   return new Promise((resolve) => {
-    const token = getAuthToken();
-    const apiUrl = `https://api.github.com/repos/${upstreamRepo}/contents/${filePath}?ref=${upstreamBranch}`;
-    const headers = {
-      'User-Agent': 'agent-sync-tool',
-      'Accept': 'application/vnd.github.raw'
+    const options = {
+      hostname: 'raw.githubusercontent.com',
+      path: `/${repo}/${branch}/${filePath}`,
+      method: 'GET',
+      headers: {
+        'User-Agent': 'Agent-Sync-Runner',
+        ...(token ? { 'Authorization': `token ${token}` } : {})
+      }
     };
-    if (token) {
-      headers['Authorization'] = `token ${token}`;
-    }
 
-    https.get(apiUrl, { headers }, (res) => {
+    const req = https.request(options, (res) => {
       if (res.statusCode === 404) {
-        return resolve({ exists: false, content: null });
+        return resolve({ found: false, content: null, sha: null });
       }
-      if (res.statusCode === 200) {
-        let data = '';
-        res.on('data', chunk => data += chunk);
-        res.on('end', () => resolve({ exists: true, content: data }));
-        return;
+      if (res.statusCode !== 200) {
+        return resolve({ found: false, error: `HTTP ${res.statusCode}` });
       }
 
-      // Fallback to raw.githubusercontent.com
-      const rawUrl = `https://raw.githubusercontent.com/${upstreamRepo}/${upstreamBranch}/${filePath}?t=${Date.now()}`;
-      https.get(rawUrl, { headers: { 'User-Agent': 'agent-sync-tool' } }, (rawRes) => {
-        if (rawRes.statusCode === 404) return resolve({ exists: false, content: null });
-        if (rawRes.statusCode !== 200) return resolve({ exists: false, error: `HTTP ${rawRes.statusCode}` });
-        let data = '';
-        rawRes.on('data', chunk => data += chunk);
-        rawRes.on('end', () => resolve({ exists: true, content: data }));
-      }).on('error', (err) => resolve({ exists: false, error: err.message }));
-    }).on('error', (err) => {
-      resolve({ exists: false, error: err.message });
+      let data = '';
+      res.on('data', chunk => data += chunk);
+      res.on('end', () => {
+        resolve({ found: true, content: data });
+      });
     });
+
+    req.on('error', (err) => resolve({ found: false, error: err.message }));
+    req.end();
   });
 }
 
-// Normalize line endings for clean cross-platform comparison
-function normalizeContent(str) {
-  if (typeof str !== 'string') return '';
-  return str.replace(/\r\n/g, '\n').trim();
+function fetchUpstreamSha(filePath, repo, branch, token) {
+  return new Promise((resolve) => {
+    const options = {
+      hostname: 'api.github.com',
+      path: `/repos/${repo}/contents/${filePath}?ref=${branch}`,
+      method: 'GET',
+      headers: {
+        'User-Agent': 'Agent-Sync-Runner',
+        'Accept': 'application/vnd.github.v3+json',
+        ...(token ? { 'Authorization': `token ${token}` } : {})
+      }
+    };
+
+    const req = https.request(options, (res) => {
+      if (res.statusCode === 404) {
+        return resolve(null);
+      }
+      let body = '';
+      res.on('data', chunk => body += chunk);
+      res.on('end', () => {
+        try {
+          const json = JSON.parse(body);
+          resolve(json.sha || null);
+        } catch {
+          resolve(null);
+        }
+      });
+    });
+
+    req.on('error', () => resolve(null));
+    req.end();
+  });
 }
 
-// Command: Status
-async function handleStatus() {
-  console.log(`\n🔍 Checking synchronization with upstream [${upstreamRepo}@${upstreamBranch}]...\n`);
-  console.log('='.repeat(78));
-  console.log(String('File').padEnd(46) + String('Status').padEnd(20) + 'Action Needed');
-  console.log('-'.repeat(78));
+function normalizeNewlines(str) {
+  return (str || '').replace(/\r\n/g, '\n').trim();
+}
 
-  let hasDivergence = false;
-  let aheadCount = 0;
-  let behindCount = 0;
+async function checkStatus(token) {
+  console.log(`\n🔍 Checking synchronization with upstream [${upstreamRepo}@${upstreamBranch}]...\n`);
+  const results = [];
 
   for (const relPath of TRACKED_FILES) {
-    const localPath = path.join(REPO_ROOT, relPath);
-    const localExists = fs.existsSync(localPath);
-    const localContent = localExists ? fs.readFileSync(localPath, 'utf8') : null;
+    const localExists = fs.existsSync(relPath);
+    const localContent = localExists ? fs.readFileSync(relPath, 'utf8') : null;
+    const upstreamRes = await fetchUpstreamFile(relPath, upstreamRepo, upstreamBranch, token);
 
-    const upstream = await fetchUpstreamFile(relPath);
+    let status = 'Unknown';
+    let action = 'None';
 
-    let statusText = '';
-    let actionText = '';
-
-    if (!localExists && !upstream.exists) {
-      statusText = '⚪ Not Present';
-      actionText = 'None';
-    } else if (localExists && !upstream.exists) {
-      statusText = '🟡 New Local File';
-      actionText = 'Push to Upstream';
-      hasDivergence = true;
-      aheadCount++;
-    } else if (!localExists && upstream.exists) {
-      statusText = '🔵 Upstream Only';
-      actionText = 'Run --pull to import';
-      hasDivergence = true;
-      behindCount++;
+    if (!localExists && !upstreamRes.found) {
+      status = '⚪ Missing Both';
+      action = 'Initialize file';
+    } else if (!localExists && upstreamRes.found) {
+      status = '🔵 Upstream Only';
+      action = 'Run --pull to adopt';
+    } else if (localExists && !upstreamRes.found) {
+      status = '🟡 Local Only';
+      action = 'Run --push to share upstream';
+    } else if (normalizeNewlines(localContent) === normalizeNewlines(upstreamRes.content)) {
+      status = '🟢 In Sync';
+      action = 'Up to date';
     } else {
-      const normLocal = normalizeContent(localContent);
-      const normUpstream = normalizeContent(upstream.content);
-
-      if (normLocal === normUpstream) {
-        statusText = '🟢 In Sync';
-        actionText = 'Up to date';
-      } else {
-        statusText = '🟡 Diverged';
-        actionText = 'Review diff / Push';
-        hasDivergence = true;
-        aheadCount++;
-      }
+      status = '🟠 Diverged';
+      action = 'Review diff / pull or push';
     }
 
-    console.log(relPath.padEnd(46) + statusText.padEnd(20) + actionText);
+    results.push({ file: relPath, status, action });
   }
 
+  // Display Table
   console.log('='.repeat(78));
-  if (!hasDivergence) {
-    console.log('✨ All agent governance files are fully synchronized with upstream template!\n');
+  console.log(`${'File'.padEnd(45)} ${'Status'.padEnd(19)} ${'Action Needed'}`);
+  console.log('-'.repeat(78));
+  results.forEach(r => {
+    console.log(`${r.file.padEnd(45)} ${r.status.padEnd(19)} ${r.action}`);
+  });
+  console.log('='.repeat(78));
+
+  const divergedCount = results.filter(r => r.status.includes('Diverged') || r.status.includes('Local Only')).length;
+  if (divergedCount > 0) {
+    console.log(`\n💡 ${divergedCount} file(s) have local improvements ready to push upstream.`);
+    console.log(`   Run: node scripts/agent-sync.js --push`);
   } else {
-    console.log(`⚠️ Divergence detected (${aheadCount} ahead/modified, ${behindCount} missing/behind).`);
-    console.log('👉 To pull upstream updates:   node scripts/agent-sync.js --pull');
-    console.log('👉 To propose upstream sync:  node scripts/agent-sync.js --push\n');
+    console.log('\n✨ All agent governance files are fully synchronized with upstream template!');
   }
 }
 
-// Command: Pull
-async function handlePull() {
-  console.log(`\n📥 Pulling latest agent files from [${upstreamRepo}@${upstreamBranch}]...\n`);
+async function pullUpdates(token) {
+  console.log(`\n📥 Pulling latest templates from [${upstreamRepo}@${upstreamBranch}]...\n`);
   let updatedCount = 0;
 
   for (const relPath of TRACKED_FILES) {
-    const localPath = path.join(REPO_ROOT, relPath);
-    const upstream = await fetchUpstreamFile(relPath);
+    const upstreamRes = await fetchUpstreamFile(relPath, upstreamRepo, upstreamBranch, token);
+    if (!upstreamRes.found) continue;
 
-    if (!upstream.exists) {
-      console.log(`⏩ Skipping ${relPath} (not in upstream template)`);
-      continue;
-    }
+    const localExists = fs.existsSync(relPath);
+    const localContent = localExists ? fs.readFileSync(relPath, 'utf8') : '';
 
-    const localExists = fs.existsSync(localPath);
-    const normUpstream = normalizeContent(upstream.content);
-
-    if (localExists) {
-      const normLocal = normalizeContent(fs.readFileSync(localPath, 'utf8'));
-      if (normLocal === normUpstream) {
-        console.log(`✅ ${relPath} is already up to date.`);
-        continue;
-      }
-
-      // Backup local before overwriting
-      const backupPath = `${localPath}.bak`;
-      fs.copyFileSync(localPath, backupPath);
-      console.log(`📦 Backed up current version to ${relPath}.bak`);
+    if (!localExists || normalizeNewlines(localContent) !== normalizeNewlines(upstreamRes.content)) {
+      fs.mkdirSync(path.dirname(relPath), { recursive: true });
+      fs.writeFileSync(relPath, upstreamRes.content, 'utf8');
+      console.log(`   ✅ Updated: ${relPath}`);
+      updatedCount++;
     } else {
-      fs.mkdirSync(path.dirname(localPath), { recursive: true });
+      console.log(`   🟢 Current: ${relPath}`);
     }
-
-    fs.writeFileSync(localPath, upstream.content, 'utf8');
-    console.log(`⬇️ Updated ${relPath}`);
-    updatedCount++;
   }
 
-  console.log(`\n🎉 Pull complete! ${updatedCount} file(s) updated.\n`);
+  console.log(`\n✨ Pull complete. ${updatedCount} file(s) updated.`);
 }
 
-// Command: Push
-async function handlePush() {
-  console.log(`\n🚀 Proposing agent improvements to upstream [${upstreamRepo}]...\n`);
-  const token = getAuthToken();
+async function pushUpdates(token) {
+  if (!token) {
+    console.error('❌ Error: A GitHub token (GITHUB_TOKEN or GITHUB_PERSONAL_ACCESS_TOKEN) is required to push upstream.');
+    process.exit(1);
+  }
 
-  // Check which files differ
+  console.log(`\n🚀 Preparing to push template improvements to [${upstreamRepo}]...\n`);
+
+  // Detect which files actually have differences or are new
   const changedFiles = [];
   for (const relPath of TRACKED_FILES) {
-    const localPath = path.join(REPO_ROOT, relPath);
-    if (!fs.existsSync(localPath)) continue;
+    if (!fs.existsSync(relPath)) continue;
+    const localContent = fs.readFileSync(relPath, 'utf8');
+    const upstreamRes = await fetchUpstreamFile(relPath, upstreamRepo, upstreamBranch, token);
 
-    const localContent = fs.readFileSync(localPath, 'utf8');
-    const upstream = await fetchUpstreamFile(relPath);
-
-    if (!upstream.exists || normalizeContent(localContent) !== normalizeContent(upstream.content)) {
+    if (!upstreamRes.found || normalizeNewlines(localContent) !== normalizeNewlines(upstreamRes.content)) {
       changedFiles.push(relPath);
     }
   }
 
   if (changedFiles.length === 0) {
-    console.log('✨ No changes detected between local files and upstream template. Nothing to push!\n');
+    console.log('✨ No local divergences found. Upstream is already up to date!');
     return;
   }
 
-  console.log(`Identified ${changedFiles.length} file(s) with improvements to push:`);
-  changedFiles.forEach(f => console.log(`   - ${f}`));
+  console.log(`Detected changes in ${changedFiles.length} file(s):`);
+  changedFiles.forEach(f => console.log(` - ${f}`));
 
-  // Check if gh CLI is available
-  let hasGh = false;
-  try {
-    execSync('gh --version', { stdio: 'ignore' });
-    hasGh = true;
-  } catch {}
+  const timestamp = Math.floor(Date.now() / 1000);
+  const syncBranch = `template-sync-${timestamp}`;
+  const tmpDir = path.join(process.cwd(), '.agent-sync-tmp');
 
-  const sourceRepo = path.basename(REPO_ROOT);
-  const syncBranchName = `sync/agent-updates-from-${sourceRepo}-${Date.now().toString().slice(-4)}`;
-
-  if (isDirect && hasGh) {
-    console.log(`\n⚡ Direct push requested. Applying updates directly to ${upstreamRepo}@${upstreamBranch}...`);
-    // Direct sync using gh api or clone
-    syncViaClone({ directPush: true, changedFiles });
-    return;
-  }
-
-  if (hasGh) {
-    console.log(`\n🌿 Creating upstream branch and Pull Request via GitHub CLI...`);
-    syncViaClone({ directPush: false, syncBranchName, changedFiles });
-  } else {
-    console.log('\nℹ️ GitHub CLI (`gh`) not detected or not authenticated.');
-    console.log('To synchronize manually:');
-    console.log(`1. Fork or clone https://github.com/${upstreamRepo}`);
-    console.log(`2. Copy the modified files listed above into your clone.`);
-    console.log(`3. Commit and open a Pull Request against ${upstreamRepo}.`);
-    console.log('\nAlternatively, automated CI will handle this when merged to your default branch via .github/workflows/agent-template-sync.yml');
-  }
-}
-
-function syncViaClone({ directPush, syncBranchName, changedFiles }) {
-  const tmpDir = path.join(REPO_ROOT, '.tmp-agent-sync');
   try {
     if (fs.existsSync(tmpDir)) {
       fs.rmSync(tmpDir, { recursive: true, force: true });
     }
 
-function getCloneUrl(repo) {
-  if (process.env.CI || process.env.GITHUB_ACTIONS) {
-    const token = getAuthToken();
-    return token ? `https://x-access-token:${token}@github.com/${repo}.git` : `https://github.com/${repo}.git`;
-  }
-  try {
-    execSync('ssh -o BatchMode=yes -o ConnectTimeout=3 -T git@github.com', { stdio: 'ignore' });
-    return `git@github.com:${repo}.git`;
-  } catch (e) {
-    if (e.status === 1) {
-      return `git@github.com:${repo}.git`;
-    }
-  }
-  const token = getAuthToken();
-  return token ? `https://x-access-token:${token}@github.com/${repo}.git` : `https://github.com/${repo}.git`;
-}
+    console.log(`\nCloning upstream [${upstreamRepo}]...`);
+    const cloneUrl = `https://x-access-token:${token}@github.com/${upstreamRepo}.git`;
+    execSync(`git clone --depth 1 --branch ${upstreamBranch} "${cloneUrl}" "${tmpDir}"`, { stdio: 'pipe' });
 
-    const cloneUrl = getCloneUrl(upstreamRepo);
-
-    console.log(`   Cloning upstream repository ${upstreamRepo}...`);
-    execSync(`git clone --depth 1 --branch ${upstreamBranch} "${cloneUrl}" "${tmpDir}"`, {
-      stdio: ['pipe', 'pipe', 'pipe']
-    });
-
-    execSync('git config user.name "Autonomous Agent"', { cwd: tmpDir, stdio: 'pipe' });
-    execSync('git config user.email "agent@f1-viewer.local"', { cwd: tmpDir, stdio: 'pipe' });
-
-    if (!directPush) {
-      execSync(`git checkout -b ${syncBranchName}`, { cwd: tmpDir, stdio: 'pipe' });
-    }
-
-    // Copy modified files
+    // Copy changed files to tmp clone
     for (const relPath of changedFiles) {
-      const src = path.join(REPO_ROOT, relPath);
-      const dest = path.join(tmpDir, relPath);
-      fs.mkdirSync(path.dirname(dest), { recursive: true });
-      fs.copyFileSync(src, dest);
+      const destPath = path.join(tmpDir, relPath);
+      fs.mkdirSync(path.dirname(destPath), { recursive: true });
+      fs.copyFileSync(relPath, destPath);
     }
 
-    execSync('git add -A', { cwd: tmpDir, stdio: 'pipe' });
-    const gitStatus = execSync('git status --porcelain', { cwd: tmpDir, encoding: 'utf8' }).trim();
-    if (!gitStatus) {
-      console.log('   ✨ Upstream working tree is already up to date. No new commit needed.');
-      return;
-    }
+    // Git operations inside clone
+    execSync(`git config user.name "Autonomous Agent"`, { cwd: tmpDir });
+    execSync(`git config user.email "agent@users.noreply.github.com"`, { cwd: tmpDir });
 
-    const commitMsg = `feat(sync): incorporate agent rule & workflow updates from ${path.basename(REPO_ROOT)}`;
-    execSync(`git commit -m "${commitMsg}"`, { cwd: tmpDir, stdio: 'pipe' });
-
-    if (directPush) {
-      execSync(`git push origin ${upstreamBranch}`, { cwd: tmpDir, stdio: 'pipe' });
-      console.log(`\n✅ Successfully pushed updates directly to ${upstreamRepo}@${upstreamBranch}!`);
+    if (isDirect) {
+      console.log('Committing and pushing directly to upstream default branch...');
+      execSync(`git add .`, { cwd: tmpDir });
+      execSync(`git commit -m "feat(template): synchronize agent governance improvements from downstream"`, { cwd: tmpDir });
+      execSync(`git push origin ${upstreamBranch}`, { cwd: tmpDir });
+      console.log('✅ Changes pushed directly to upstream!');
     } else {
-      execSync(`git push origin ${syncBranchName}`, { cwd: tmpDir, stdio: 'pipe' });
-      const prTitle = `feat(sync): agent governance updates from ${path.basename(REPO_ROOT)}`;
-      const prBody = `Automated agent governance synchronization.\n\n### Updated Files:\n${changedFiles.map(f => `- \`${f}\``).join('\n')}\n\nPropagated from \`${path.basename(REPO_ROOT)}\`.`;
-      execSync(`gh pr create --repo ${upstreamRepo} --title "${prTitle}" --body "${prBody}" --head ${syncBranchName} --base ${upstreamBranch}`, {
-        cwd: tmpDir,
-        stdio: 'pipe'
-      });
-      console.log(`\n🎉 Pull Request created successfully on ${upstreamRepo}!`);
+      console.log(`Creating branch [${syncBranch}] and opening Pull Request...`);
+      execSync(`git checkout -b ${syncBranch}`, { cwd: tmpDir });
+      execSync(`git add .`, { cwd: tmpDir });
+      
+      const statusOut = execSync(`git status --porcelain`, { cwd: tmpDir, encoding: 'utf8' });
+      if (!statusOut.trim()) {
+        console.log('No git differences detected after staging. Nothing to commit.');
+        return;
+      }
+
+      execSync(`git commit -m "feat(template): synchronize agent governance improvements from downstream"`, { cwd: tmpDir });
+      execSync(`git push -u origin ${syncBranch}`, { cwd: tmpDir });
+
+      // Create PR via GitHub API
+      console.log('Creating Pull Request on GitHub...');
+      const prRes = await createPullRequest(upstreamRepo, {
+        title: '🤖 feat(template): sync agent rules and governance improvements',
+        body: `## 🔄 Upstream Template Synchronization\n\nThis PR proposes agent governance and workflow improvements originating from downstream execution.\n\n### 📦 Updated Files:\n${changedFiles.map(f => `- \`${f}\``).join('\n')}\n\nAutomated by \`scripts/agent-sync.js\`.`,
+        head: syncBranch,
+        base: upstreamBranch
+      }, token);
+
+      if (prRes.html_url) {
+        console.log(`\n🎉 Pull Request opened: ${prRes.html_url}`);
+      } else {
+        console.log('PR creation response:', prRes);
+      }
     }
   } catch (err) {
-    console.error('⚠️ Sync operation encountered an issue:', err.message);
+    console.error('❌ Push failed:', err.message);
+    if (err.stdout) console.error(err.stdout.toString());
+    if (err.stderr) console.error(err.stderr.toString());
   } finally {
     if (fs.existsSync(tmpDir)) {
       try {
         fs.rmSync(tmpDir, { recursive: true, force: true });
-      } catch {}
+      } catch (e) {
+        // cleanup fallback
+      }
     }
   }
 }
 
-// Main Runner
+function createPullRequest(repo, payload, token) {
+  return new Promise((resolve, reject) => {
+    const data = JSON.stringify(payload);
+    const options = {
+      hostname: 'api.github.com',
+      path: `/repos/${repo}/pulls`,
+      method: 'POST',
+      headers: {
+        'User-Agent': 'Agent-Sync-Runner',
+        'Authorization': `token ${token}`,
+        'Content-Type': 'application/json',
+        'Content-Length': Buffer.byteLength(data)
+      }
+    };
+
+    const req = https.request(options, (res) => {
+      let body = '';
+      res.on('data', chunk => body += chunk);
+      res.on('end', () => {
+        try {
+          resolve(JSON.parse(body));
+        } catch {
+          resolve({ raw: body });
+        }
+      });
+    });
+
+    req.on('error', reject);
+    req.write(data);
+    req.end();
+  });
+}
+
+// Execution Entrypoint
 async function main() {
-  switch (mode) {
-    case 'status':
-      await handleStatus();
-      break;
-    case 'pull':
-      await handlePull();
-      break;
-    case 'push':
-      await handlePush();
-      break;
-    default:
-      printHelp();
+  const token = getGitHubToken();
+  if (mode === 'status') {
+    await checkStatus(token);
+  } else if (mode === 'pull') {
+    await pullUpdates(token);
+  } else if (mode === 'push') {
+    await pushUpdates(token);
   }
 }
 
 main().catch(err => {
-  console.error('❌ Sync script failure:', err);
+  console.error('Fatal execution error:', err);
   process.exit(1);
 });

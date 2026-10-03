@@ -16,10 +16,12 @@ Works seamlessly with any language or framework: **Next.js, React, Vue, Python (
   - **Token & Budget Guardrail**: Mandatory pause and insights report if a task reaches 15 turns.
   - **Anti-Duplication**: Board-status driven task pickup and immediate takeover comments.
 - **`mcp_config.template.json`**: Pre-configured MCP configuration for GitHub, Vercel, and deployment integrations.
-- **`setup.js`**: One-click initialization script to create all GitHub labels in any new repository.
+- **`agent-manager.json`**: Out-of-the-box configuration manifest ready to interface with Google Antigravity Agent Manager control plane.
+- **`setup.js`**: One-click initialization script to create all GitHub labels and register webhooks in any new repository.
 - **`scripts/agent-sync.js`**: Zero-dependency CLI tool to inspect divergence, pull updates, and push improvements upstream.
 - **`.github/workflows/agent-template-sync.yml`**: Automated CI workflow to propose updates back to the upstream template repository.
 - **`docs/TEMPLATE_SYNC_GUIDE.md`**: Complete architectural and operational synchronization guide.
+- **`docs/AGENT_MANAGER_INTEGRATION.md`**: Architectural and setup guide for orchestrating agents via the Agent Manager control plane.
 
 ---
 
