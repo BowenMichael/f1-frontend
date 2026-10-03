@@ -2,23 +2,24 @@
 
 ## 1. Autonomous Task Lifecycle & Worktree Isolation
 
-### A. Issue Takeover Notification
-When picking up an issue from GitHub (`BowenMichael/f1-frontend`):
-1. **Selection**: Look for issues labeled `agent:ready`.
-2. **State Transition**:
-   - Remove label `agent:ready`.
-   - Add label `agent:in-progress`.
-3. **Mandatory Issue Takeover Comment**:
-   The agent **MUST immediately comment** on the GitHub issue to notify the team that work has begun:
+### A. Board Status-Driven Takeover & Comment Ingestion
+The **GitHub Project Board** (`F1 Viewer - Sprint & Agent Board`) is the primary driver of agent task execution:
+1. **Board Status Trigger**: Agents actively monitor the project board for items in the **`📋 Ready for Agent`** column.
+2. **Review User Comments First**: Before writing any code, the agent MUST read the latest comments on the issue to ingest user feedback, questions, and scope refinements.
+3. **State Transition**:
+   - Move the card on the Project Board to **`⚡ In Progress`**.
+   - Ensure the issue label is set to `agent:in-progress`.
+4. **Mandatory Issue Takeover Comment**:
+   The agent **MUST immediately comment** on the GitHub issue acknowledging the user's specific comments and outlining the updated plan:
    ```markdown
    🤖 **Agent Takeover: Development Started**
 
+   - **Feedback Acknowledged**: [Briefly address the user's latest comment/request]
    - **Worktree**: `.worktrees/issue-<number>`
    - **Branch**: `feat/issue-<number>-<short-description>`
-   - **Target Session / Endpoint**: [e.g. OpenF1 Drivers/Sessions]
    - **Planned Approach**:
-     1. [Step 1: Interface / Schema definition]
-     2. [Step 2: Component implementation]
+     1. [Step 1: Next immediate deliverable]
+     2. [Step 2: Component / Implementation]
      3. [Step 3: Verification & demo video recording]
    - **Budget Guardrail**: Max 15 tool execution turns before pause & approval.
    ```
