@@ -88,3 +88,27 @@ When a threshold is reached, the agent **MUST IMMEDIATELY PAUSE** execution on t
    ```
 3. **Await User Approval**:
    - The agent MUST NOT take further code modification actions until the user explicitly responds with approval to proceed.
+
+---
+
+## 3. 🔄 Template Synchronization Protocol (Upstream Feedback Loop)
+
+To prevent fragmentation and ensure learnings, guardrails, and workflow improvements benefit the entire agent ecosystem:
+
+1. **Check Sync Divergence**:
+   - When introducing improvements to agent guidelines (`AGENTS.md`), issue templates, workflows, or MCP configuration, run:
+     ```bash
+     node scripts/agent-sync.js --status
+     ```
+2. **Propose Improvements Upstream**:
+   - To propagate agent framework enhancements back to `BowenMichael/agent-starter-template`, run:
+     ```bash
+     node scripts/agent-sync.js --push
+     ```
+   - Alternatively, automated CI (`.github/workflows/agent-template-sync.yml`) will propose a PR upon merging changes to master.
+3. **Ingest Upstream Updates**:
+   - Before starting major agent refactoring tasks, agents may check for upstream template updates:
+     ```bash
+     node scripts/agent-sync.js --pull
+     ```
+

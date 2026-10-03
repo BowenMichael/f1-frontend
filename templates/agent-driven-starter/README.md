@@ -17,15 +17,20 @@ Works seamlessly with any language or framework: **Next.js, React, Vue, Python (
   - **Anti-Duplication**: Board-status driven task pickup and immediate takeover comments.
 - **`mcp_config.template.json`**: Pre-configured MCP configuration for GitHub, Vercel, and deployment integrations.
 - **`setup.js`**: One-click initialization script to create all GitHub labels in any new repository.
+- **`scripts/agent-sync.js`**: Zero-dependency CLI tool to inspect divergence, pull updates, and push improvements upstream.
+- **`.github/workflows/agent-template-sync.yml`**: Automated CI workflow to propose updates back to the upstream template repository.
+- **`docs/TEMPLATE_SYNC_GUIDE.md`**: Complete architectural and operational synchronization guide.
 
 ---
 
 ## 🚀 Quickstart: Using This Template for Any New Repo
 
 ### Step 1: Copy Template Files into Your Repo
-Copy the `.github/`, `AGENTS.md`, and `mcp_config.template.json` files to the root of your project:
+Copy the template files into your project root:
 ```bash
 cp -r .github/ /path/to/your-new-project/
+cp -r docs/ /path/to/your-new-project/
+cp -r scripts/ /path/to/your-new-project/
 cp AGENTS.md /path/to/your-new-project/
 cp mcp_config.template.json /path/to/your-new-project/
 ```
@@ -57,3 +62,13 @@ In Antigravity chat, trigger your recurring background daemon:
 2. **Move to '📋 Ready for Agent'** on your Kanban board.
 3. **Agent Picks Up**: Automatically creates an isolated `.worktrees/issue-<#>`, posts a takeover comment, writes code, and runs tests.
 4. **Review & Approve**: The agent opens a PR with an attached video walkthrough and screenshots, moving the card to `🔍 In Review`.
+
+---
+
+## 🔁 Upstream Template Synchronization
+As you evolve your agent guidelines and workflows in any repository, keep them synchronized with upstream:
+- **Inspect Status**: `node scripts/agent-sync.js --status`
+- **Pull Improvements**: `node scripts/agent-sync.js --pull`
+- **Push Innovations Upstream**: `node scripts/agent-sync.js --push`
+See [`docs/TEMPLATE_SYNC_GUIDE.md`](./docs/TEMPLATE_SYNC_GUIDE.md) for full architecture details.
+
