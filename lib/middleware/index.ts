@@ -15,10 +15,7 @@ export interface Driver {
 
 const API_URL = 'https://api.openf1.org/v1/';
 
-export async function GETDrivers(
-  driverNumber?: number,
-  sessionKey?: number
-): Promise<Driver[]> {
+export async function GETDrivers(driverNumber?: number, sessionKey?: number): Promise<Driver[]> {
   const params = new URLSearchParams();
   if (driverNumber !== undefined) {
     params.append('driver_number', driverNumber.toString());
@@ -76,4 +73,4 @@ export async function GETSessions(
 
   const data: Session[] = await res.json();
   return data;
-}
+}
