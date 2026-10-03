@@ -44,6 +44,21 @@ To prevent interference with the user's active editor, other agent sessions, or 
      ```
    - Tag the issue with `agent:review`.
 
+### C. Issue & Project Board Synchronization (Anti-Duplication Protocol)
+To ensure multiple agents or team members never duplicate work:
+1. **Check Claim Status First**:
+   - Before taking any action on an issue, verify it is strictly in `agent:ready` state and has no active worktree in `.worktrees/`.
+   - If an issue is already labeled `agent:in-progress`, `agent:needs-approval`, or has an active worktree, **DO NOT TOUCH IT**.
+2. **Immediate Project Board Update**:
+   - Move the card on the GitHub Project Board to **`⚡ In Progress`** upon takeover.
+3. **Always Post Deliverables Directly to the GitHub Issue**:
+   - **Never keep answers only in local IDE chat.**
+   - All architecture specifications, deployment guides, research findings, and task completions must be posted as formal comments on the GitHub issue.
+4. **Mark Acceptance Criteria Checkboxes**:
+   - When criteria are satisfied, the agent MUST update the GitHub issue body via API to check off the boxes (`- [x]`).
+5. **Move to Review**:
+   - Once all criteria are met, update the issue labels to `agent:review` and move the card on the Project Board to **`🔍 In Review`**.
+
 ---
 
 ## 2. 🛑 Token & Complexity Budget Guardrail (Mandatory Pause)
