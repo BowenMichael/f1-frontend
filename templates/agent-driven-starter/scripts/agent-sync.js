@@ -308,10 +308,24 @@ function syncViaClone({ directPush, syncBranchName, changedFiles }) {
       fs.rmSync(tmpDir, { recursive: true, force: true });
     }
 
+function getCloneUrl(repo) {
+  if (process.env.CI || process.env.GITHUB_ACTIONS) {
     const token = getAuthToken();
-    const cloneUrl = token
-      ? `https://x-access-token:${token}@github.com/${upstreamRepo}.git`
-      : `https://github.com/${upstreamRepo}.git`;
+    return token ? `https://x-access-token:${token}@github.com/${repo}.git` : `https://github.com/${repo}.git`;
+  }
+  try {
+    execSync('ssh -o BatchMode=yes -o ConnectTimeout=3 -T git@github.com', { stdio: 'ignore' });
+    return `git@github.com:${repo}.git`;
+  } catch (e) {
+    if (e.status === 1) {
+      return `git@github.com:${repo}.git`;
+    }
+  }
+  const token = getAuthToken();
+  return token ? `https://x-access-token:${token}@github.com/${repo}.git` : `https://github.com/${repo}.git`;
+}
+
+    const cloneUrl = getCloneUrl(upstreamRepo);
 
     console.log(`   Cloning upstream repository ${upstreamRepo}...`);
     execSync(`git clone --depth 1 --branch ${upstreamBranch} "${cloneUrl}" "${tmpDir}"`, {
