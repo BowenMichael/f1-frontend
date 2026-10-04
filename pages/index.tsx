@@ -16,6 +16,7 @@ import { IconFlag, IconRefresh, IconCalendar, IconDeviceAnalytics } from '@table
 import { RaceExplorer } from '../components/RaceExplorer/RaceExplorer';
 import { ColorSchemeToggle } from '../components/ColorSchemeToggle/ColorSchemeToggle';
 import { DeploymentBadge } from '../components/DeploymentBadge/DeploymentBadge';
+import { PatchNotesButton } from '../components/PatchNotes';
 import { Leaderboard } from '../components/Leaderboard/Leaderboard';
 import { TrackReplayTab } from '../components/Replay';
 import { TelemetryComparison } from '../components/TelemetryComparison/TelemetryComparison';
@@ -165,6 +166,7 @@ export default function HomePage() {
               </>
             )}
             <DeploymentBadge />
+            <PatchNotesButton />
             <ColorSchemeToggle />
           </Group>
         </Group>

@@ -1,3 +1,4 @@
+/* eslint-disable no-param-reassign, no-plusplus, no-bitwise */
 import { LocationPoint, NormalizedPoint } from '../types/replay';
 
 /**

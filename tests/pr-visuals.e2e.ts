@@ -34,6 +34,27 @@ test.describe('PR Visual Capture', () => {
 
     await page.waitForTimeout(1000);
 
+    // Open Patch Notes drawer
+    const patchNotesBtn = page.getByTestId('patch-notes-button');
+    if (await patchNotesBtn.isVisible()) {
+      await patchNotesBtn.click();
+      await page.waitForTimeout(1000);
+      await page.screenshot({
+        path: path.join(screenshotDir, 'patch-notes-drawer.png'),
+        fullPage: true,
+      });
+
+      // Close the drawer
+      const closeBtn = page.getByRole('button', { name: /Close drawer/i });
+      if (await closeBtn.isVisible()) {
+        await closeBtn.click();
+        await page.waitForTimeout(500);
+      } else {
+        await page.keyboard.press('Escape');
+        await page.waitForTimeout(500);
+      }
+    }
+
     // Switch to 2D Track Replay Tab to capture replay smoothing and car positions
     const replayTab = await page.getByRole('tab', { name: /2D Track Replay/i });
     if (await replayTab.isVisible()) {
