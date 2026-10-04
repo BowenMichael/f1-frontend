@@ -143,7 +143,6 @@ dist
 # PR Visuals
 .pr-visuals/
 
-
-playwright-report/
+# Playwright artifacts
 test-results/
-
+playwright-report/

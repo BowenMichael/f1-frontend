@@ -38,13 +38,14 @@ To prevent interference with the user's active editor, other agent sessions, or 
    ```
 3. **Execution**:
    - All file edits, typechecks, component creation, and commits must be scoped to `.worktrees/issue-<number>`.
+   - **Mandatory Visual Verification**: For any UI changes, agents must capture screenshots and record short interactive video demonstrations. Run `npm run test:visual` using the template script (`test-utils/visual-demo.spec.ts`). See `docs/VISUAL_VERIFICATION_GUIDE.md` for full instructions.
 4. **Completion & Cleanup**:
    - Push the branch from the worktree:
      ```bash
      git push origin feat/issue-<number>-<short-description>
      ```
-   - Before opening a PR, run `yarn pr:capture` to generate visuals.
-   - Open the Pull Request linking to the issue, and drag-and-drop the generated files from `.pr-visuals/` into the GitHub PR description.
+   - Before opening a PR, run `yarn pr:capture` to generate visuals in `.pr-visuals/`.
+   - Open the Pull Request linking to the issue with demo video, screenshots, and **a direct link to the active development server or preview environment**. PRs should include the generated demo video and screenshots attached in the PR description.
    - Clean up the worktree once the branch is pushed:
      ```bash
      git worktree remove .worktrees/issue-<number>

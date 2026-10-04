@@ -12,11 +12,13 @@ import {
   ActionIcon,
   Tooltip,
 } from '@mantine/core';
-import { IconFlag, IconRefresh, IconCalendar } from '@tabler/icons-react';
+import { IconFlag, IconRefresh, IconCalendar, IconDeviceAnalytics } from '@tabler/icons-react';
 import { RaceExplorer } from '../components/RaceExplorer/RaceExplorer';
 import { ColorSchemeToggle } from '../components/ColorSchemeToggle/ColorSchemeToggle';
 import { DeploymentBadge } from '../components/DeploymentBadge/DeploymentBadge';
 import { Leaderboard } from '../components/Leaderboard/Leaderboard';
+import { TrackReplayTab } from '../components/Replay';
+import { TelemetryComparison } from '../components/TelemetryComparison/TelemetryComparison';
 import {
   Driver,
   Lap,
@@ -185,6 +187,17 @@ export default function HomePage() {
           <Tabs.Tab value="calendar" leftSection={<IconCalendar size="1rem" />}>
             Race Calendar & Drivers
           </Tabs.Tab>
+          <Tabs.Tab
+            value="replay"
+            leftSection={<IconDeviceAnalytics size="1rem" />}
+            rightSection={
+              <Badge size="xs" color="yellow" variant="light">
+                2D Vision
+              </Badge>
+            }
+          >
+            2D Track Replay
+          </Tabs.Tab>
         </Tabs.List>
 
         <Tabs.Panel value="leaderboard" pt="md">
@@ -198,11 +211,20 @@ export default function HomePage() {
               error={error}
               title={`Classification & Lap Timing — ${currentSessionLabel}`}
             />
+            <TelemetryComparison
+              sessionKey={parseInt(selectedSessionKey, 10)}
+              drivers={drivers}
+              laps={laps}
+            />
           </Stack>
         </Tabs.Panel>
 
         <Tabs.Panel value="calendar" pt="md">
           <RaceExplorer />
+        </Tabs.Panel>
+
+        <Tabs.Panel value="replay" pt="md">
+          <TrackReplayTab sessionKey={selectedSessionKey} drivers={drivers} />
         </Tabs.Panel>
       </Tabs>
     </Container>
