@@ -43,7 +43,7 @@ To prevent interference with the user's active editor, other agent sessions, or 
      ```bash
      git push origin feat/issue-<number>-<short-description>
      ```
-   - Open the Pull Request linking to the issue with demo video and screenshots.
+   - Open the Pull Request linking to the issue with demo video, screenshots, and **a direct link to the active development server or preview environment**.
    - Clean up the worktree once the branch is pushed:
      ```bash
      git worktree remove .worktrees/issue-<number>
