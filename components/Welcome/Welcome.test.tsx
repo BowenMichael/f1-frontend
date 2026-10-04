@@ -15,6 +15,7 @@ describe('Welcome component', () => {
     (middleware.GETDrivers as jest.Mock).mockResolvedValue([]);
     render(<Welcome />);
     expect(screen.getByText('F1 Viewer')).toBeInTheDocument();
+    expect(screen.getByText(/Explore 2023 Formula 1 session drivers/i)).toBeInTheDocument();
     await waitFor(() => {
       expect(middleware.GETDrivers).toHaveBeenCalled();
     });
