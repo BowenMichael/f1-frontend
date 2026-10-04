@@ -17,6 +17,7 @@ import { RaceExplorer } from '../components/RaceExplorer/RaceExplorer';
 import { ColorSchemeToggle } from '../components/ColorSchemeToggle/ColorSchemeToggle';
 import { DeploymentBadge } from '../components/DeploymentBadge/DeploymentBadge';
 import { Leaderboard } from '../components/Leaderboard/Leaderboard';
+import { TelemetryComparison } from '../components/TelemetryComparison/TelemetryComparison';
 import {
   Driver,
   Lap,
@@ -197,6 +198,11 @@ export default function HomePage() {
               loading={loading}
               error={error}
               title={`Classification & Lap Timing — ${currentSessionLabel}`}
+            />
+            <TelemetryComparison
+              sessionKey={parseInt(selectedSessionKey, 10)}
+              drivers={drivers}
+              laps={laps}
             />
           </Stack>
         </Tabs.Panel>
