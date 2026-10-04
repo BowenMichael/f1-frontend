@@ -5,7 +5,7 @@ This repository has been configured to support automatic deployments via Vercel 
 ## Automated Deployment Strategy
 
 Two GitHub Actions workflows have been created to manage the deployments:
-1. `.github/workflows/vercel-production.yml` - Triggers on push to `main` branch (Production)
+1. `.github/workflows/vercel-production.yml` - Triggers on push to `master` branch (Production)
 2. `.github/workflows/vercel-preview.yml` - Triggers on push to `develop` branch (Preview)
 
 ## Action Required: Setup Secrets
@@ -22,7 +22,7 @@ If you prefer to use the Vercel GitHub App instead of GitHub Actions:
 1. Go to the [Vercel Dashboard](https://vercel.com/).
 2. Click **Add New** -> **Project**.
 3. Import the `BowenMichael/f1-frontend` repository.
-4. Vercel will automatically configure `main` for Production deployments.
+4. Vercel will automatically configure `master` for Production deployments.
 5. Pushes to `develop` (and all other branches) will automatically generate Preview deployments.
 6. (Optional) You can delete the `.github/workflows/vercel-*.yml` files if you use this native integration.
 
