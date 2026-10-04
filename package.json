@@ -22,7 +22,9 @@
     "storybook:build": "storybook build",
     "agent:sync:status": "node scripts/agent-sync.js --status",
     "agent:sync:pull": "node scripts/agent-sync.js --pull",
-    "agent:sync:push": "node scripts/agent-sync.js --push"
+    "agent:sync:push": "node scripts/agent-sync.js --push",
+    "branch:audit": "tsx scripts/branch-manager/index.ts --dry-run",
+    "branch:cleanup": "tsx scripts/branch-manager/index.ts --execute"
   },
   "dependencies": {
     "@mantine/core": "7.6.1",
