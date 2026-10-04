@@ -15,6 +15,7 @@ import {
 import { IconFlag, IconRefresh, IconCalendar } from '@tabler/icons-react';
 import { RaceExplorer } from '../components/RaceExplorer/RaceExplorer';
 import { ColorSchemeToggle } from '../components/ColorSchemeToggle/ColorSchemeToggle';
+import { DeploymentBadge } from '../components/DeploymentBadge/DeploymentBadge';
 import { Leaderboard } from '../components/Leaderboard/Leaderboard';
 import {
   Driver,
@@ -161,6 +162,7 @@ export default function HomePage() {
                 </Tooltip>
               </>
             )}
+            <DeploymentBadge />
             <ColorSchemeToggle />
           </Group>
         </Group>

@@ -1,5 +1,6 @@
 # 🏎️ F1 Viewer
 
+[![Live Deployment](https://img.shields.io/badge/Live_Deployment-Active-success?style=for-the-badge)](https://f1-frontend.vercel.app)
 [![Vercel Deployment](https://deploy-badge.vercel.app/vercel/f1-frontend)](https://vercel.com/new/clone?repository-url=https://github.com/BowenMichael/f1-frontend)
 
 An interactive Formula 1 dashboard and session explorer built with **Next.js 14**, **Mantine UI v7**, and the public **[OpenF1 API](https://openf1.org/)**.
