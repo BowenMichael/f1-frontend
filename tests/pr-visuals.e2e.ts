@@ -34,17 +34,26 @@ test.describe('PR Visual Capture', () => {
 
     await page.waitForTimeout(1000);
 
-    // If there's a theme toggle (common in Mantine templates), we can toggle it and capture
-    const colorSchemeToggle = await page.$(
-      'button[title="Toggle color scheme"], button[aria-label="Toggle color scheme"], button:has(svg)'
-    );
-    if (colorSchemeToggle) {
-      await colorSchemeToggle.click();
-      await page.waitForTimeout(1000);
+    // Switch to 2D Track Replay Tab to capture replay smoothing and car positions
+    const replayTab = await page.getByRole('tab', { name: /2D Track Replay/i });
+    if (await replayTab.isVisible()) {
+      await replayTab.click();
+      await page.waitForTimeout(2000);
       await page.screenshot({
-        path: path.join(screenshotDir, 'home-page-dark-mode.png'),
+        path: path.join(screenshotDir, 'replay-tab.png'),
         fullPage: true,
       });
+
+      // Click play to demonstrate track replay movement in video
+      const playBtn = page.getByRole('button', { name: 'Play', exact: true });
+      if (await playBtn.isVisible()) {
+        await playBtn.click();
+        await page.waitForTimeout(3000);
+        await page.screenshot({
+          path: path.join(screenshotDir, 'replay-playing.png'),
+          fullPage: true,
+        });
+      }
     }
   });
 });

@@ -84,6 +84,10 @@ export function findClosestPointIndex(
   return low;
 }
 
+export interface InterpolationResult extends NormalizedPoint {
+  index: number;
+}
+
 /**
  * Interpolates coordinates for a given timestamp across location points using spline interpolation.
  */
@@ -91,19 +95,19 @@ export function interpolateCarPosition(
   points: TimestampedLocationPoint[],
   targetTime: number,
   hintIndex?: number
-): NormalizedPoint | null {
+): InterpolationResult | null {
   if (!points || points.length === 0) return null;
-  if (points.length === 1) return { x: points[0].x, y: points[0].y };
+  if (points.length === 1) return { x: points[0].x, y: points[0].y, index: 0 };
 
   const firstTime = getPointTimestamp(points[0]);
   const lastTime = getPointTimestamp(points[points.length - 1]);
 
   if (targetTime <= firstTime) {
-    return { x: points[0].x, y: points[0].y };
+    return { x: points[0].x, y: points[0].y, index: 0 };
   }
   if (targetTime >= lastTime) {
     const last = points[points.length - 1];
-    return { x: last.x, y: last.y };
+    return { x: last.x, y: last.y, index: points.length - 1 };
   }
 
   const nextIdx = findClosestPointIndex(points, targetTime, hintIndex);
@@ -116,7 +120,7 @@ export function interpolateCarPosition(
   const t2 = getPointTimestamp(p2);
 
   if (t2 <= t1) {
-    return { x: p1.x, y: p1.y };
+    return { x: p1.x, y: p1.y, index: prevIdx };
   }
 
   const factor = Math.max(0, Math.min(1, (targetTime - t1) / (t2 - t1)));
@@ -128,5 +132,6 @@ export function interpolateCarPosition(
   return {
     x: catmullRom(p0.x, p1.x, p2.x, p3.x, factor),
     y: catmullRom(p0.y, p1.y, p2.y, p3.y, factor),
+    index: prevIdx,
   };
 }

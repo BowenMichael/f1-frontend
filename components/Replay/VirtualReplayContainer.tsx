@@ -97,6 +97,8 @@ export function VirtualReplayContainer({
       <TrackMap
         svgPath={svgPath}
         driverStates={driverStates}
+        locationsByDriver={locationsByDriver}
+        boundingBox={boundingBox}
         viewBoxWidth={800}
         viewBoxHeight={500}
       />

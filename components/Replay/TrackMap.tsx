@@ -1,11 +1,13 @@
 import React from 'react';
 import { TrackSilhouette } from './TrackSilhouette';
 import { DriverMarker } from './DriverMarker';
-import { DriverState } from '../../lib/types/replay';
+import { DriverState, LocationPoint, TrackBoundingBox } from '../../lib/types/replay';
 
 export interface TrackMapProps {
   svgPath: string;
   driverStates: DriverState[];
+  locationsByDriver?: Record<number, LocationPoint[]>;
+  boundingBox?: TrackBoundingBox;
   viewBoxWidth?: number;
   viewBoxHeight?: number;
 }
@@ -13,6 +15,8 @@ export interface TrackMapProps {
 function TrackMapComponent({
   svgPath,
   driverStates,
+  locationsByDriver,
+  boundingBox,
   viewBoxWidth = 800,
   viewBoxHeight = 500,
 }: TrackMapProps) {
@@ -42,7 +46,14 @@ function TrackMapComponent({
 
         {/* Render Real-Time Drivers */}
         {driverStates.map((driver) => (
-          <DriverMarker key={driver.driver_number} driver={driver} />
+          <DriverMarker
+            key={driver.driver_number}
+            driver={driver}
+            points={locationsByDriver ? locationsByDriver[driver.driver_number] : undefined}
+            boundingBox={boundingBox}
+            viewBoxWidth={viewBoxWidth}
+            viewBoxHeight={viewBoxHeight}
+          />
         ))}
       </svg>
     </div>

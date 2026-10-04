@@ -67,11 +67,20 @@ describe('interpolation', () => {
   it('returns boundaries when targetTime is outside data bounds', () => {
     const tBefore = new Date('2023-09-03T12:59:59.000Z').getTime();
     const posBefore = interpolateCarPosition(mockPoints, tBefore);
-    expect(posBefore).toEqual({ x: 0, y: 0 });
+    expect(posBefore).toEqual({ x: 0, y: 0, index: 0 });
 
     const tAfter = new Date('2023-09-03T13:00:05.000Z').getTime();
     const posAfter = interpolateCarPosition(mockPoints, tAfter);
-    expect(posAfter).toEqual({ x: 300, y: 500 });
+    expect(posAfter).toEqual({ x: 300, y: 500, index: 2 });
+  });
+
+  it('supports hintIndex for sequential lookups', () => {
+    const tMid = new Date('2023-09-03T13:00:00.500Z').getTime();
+    const idx = findClosestPointIndex(mockPoints, tMid, 0);
+    expect(idx).toBe(1);
+
+    const pos = interpolateCarPosition(mockPoints, tMid, 0);
+    expect(pos?.index).toBe(0);
   });
 
   it('uses hintIndex correctly for sequential lookup', () => {
