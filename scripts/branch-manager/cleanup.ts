@@ -7,7 +7,9 @@ export function cleanupBranches(branches: BranchInfo[], dryRun: boolean) {
     if (branch.isMerged) {
       if (branch.isActiveWorktree && !branch.isRemote) {
         if (branch.worktreePath && branch.worktreePath.includes('.worktrees')) {
-          console.log(`[${dryRun ? 'DRY-RUN' : 'EXEC'}] Removing worktree for merged branch: ${branch.name} at ${branch.worktreePath}`);
+          console.log(
+            `[${dryRun ? 'DRY-RUN' : 'EXEC'}] Removing worktree for merged branch: ${branch.name} at ${branch.worktreePath}`
+          );
           if (!dryRun) {
             try {
               fs.rmSync(branch.worktreePath, { recursive: true, force: true });
@@ -16,7 +18,9 @@ export function cleanupBranches(branches: BranchInfo[], dryRun: boolean) {
             }
           }
         } else {
-          console.log(`[${dryRun ? 'DRY-RUN' : 'EXEC'}] Skipping worktree removal for ${branch.name} (not a linked worktree or missing path)`);
+          console.log(
+            `[${dryRun ? 'DRY-RUN' : 'EXEC'}] Skipping worktree removal for ${branch.name} (not a linked worktree or missing path)`
+          );
         }
       }
 
@@ -44,9 +48,9 @@ export function cleanupBranches(branches: BranchInfo[], dryRun: boolean) {
   }
 
   if (!dryRun) {
-    console.log("Pruning worktrees...");
+    console.log('Pruning worktrees...');
     try {
       execSync('git worktree prune', { stdio: 'ignore', timeout: 10000 });
-    } catch(e) {}
+    } catch (e) {}
   }
 }
