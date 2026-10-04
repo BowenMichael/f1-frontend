@@ -1,10 +1,10 @@
-import { Welcome } from '../components/Welcome/Welcome';
+import { RaceExplorer } from '../components/RaceExplorer/RaceExplorer';
 import { ColorSchemeToggle } from '../components/ColorSchemeToggle/ColorSchemeToggle';
 
 export default function HomePage() {
   return (
     <>
-      <Welcome />
+      <RaceExplorer />
       <ColorSchemeToggle />
     </>
   );

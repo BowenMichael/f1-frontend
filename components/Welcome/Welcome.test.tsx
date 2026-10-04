@@ -1,12 +1,22 @@
-import { render, screen } from '@/test-utils';
+import { render, screen, waitFor } from '@/test-utils';
 import { Welcome } from './Welcome';
+import * as middleware from '../../lib/middleware';
+
+jest.mock('../../lib/middleware', () => ({
+  GETDrivers: jest.fn(),
+}));
 
 describe('Welcome component', () => {
-  it('has correct Next.js theming section link', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  it('renders welcome heading and driver loading state', async () => {
+    (middleware.GETDrivers as jest.Mock).mockResolvedValue([]);
     render(<Welcome />);
-    expect(screen.getByText('this guide')).toHaveAttribute(
-      'href',
-      'https://mantine.dev/guides/next/'
-    );
+    expect(screen.getByText('F1 Viewer')).toBeInTheDocument();
+    await waitFor(() => {
+      expect(middleware.GETDrivers).toHaveBeenCalled();
+    });
   });
 });
