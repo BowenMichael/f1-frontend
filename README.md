@@ -1,5 +1,7 @@
 # 🏎️ F1 Viewer
 
+[![Live Deployment](https://img.shields.io/badge/Live_Deployment-Active-success?style=for-the-badge)](https://f1-frontend.vercel.app)
+
 An interactive Formula 1 dashboard and session explorer built with **Next.js 14**, **Mantine UI v7**, and the public **[OpenF1 API](https://openf1.org/)**.
 
 Designed for an autonomous, issue-driven AI agent workflow managed through **GitHub Projects (Jira-style Kanban)** and **Model Context Protocol (MCP)**.
