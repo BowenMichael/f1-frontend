@@ -15,7 +15,7 @@ export interface ReplayControlsProps {
   onReset: () => void;
 }
 
-export function ReplayControls({
+function ReplayControlsComponent({
   isPlaying,
   speed,
   currentTime,
@@ -115,3 +115,5 @@ export function ReplayControls({
     </Paper>
   );
 }
+
+export const ReplayControls = React.memo(ReplayControlsComponent);
