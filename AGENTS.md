@@ -44,7 +44,8 @@ To prevent interference with the user's active editor, other agent sessions, or 
      ```bash
      git push origin feat/issue-<number>-<short-description>
      ```
-   - Open the Pull Request linking to the issue with demo video, screenshots, and **a direct link to the active development server or preview environment**. **PRs will be rejected if they lack the generated demo video and screenshots attached in the PR description.**
+   - Before opening a PR, run `yarn pr:capture` to generate visuals in `.pr-visuals/`.
+   - Open the Pull Request linking to the issue with demo video, screenshots, and **a direct link to the active development server or preview environment**. PRs should include the generated demo video and screenshots attached in the PR description.
    - Clean up the worktree once the branch is pushed:
      ```bash
      git worktree remove .worktrees/issue-<number>
