@@ -50,7 +50,6 @@ function cachedFetch<T>(url: string): Promise<T> {
     return cached as Promise<T>;
   }
   const promise = fetchWithRetry(url).catch((err) => {
-    // If request failed, remove from cache so next attempts can retry
     apiCache.delete(url);
     throw err;
   });
@@ -72,6 +71,38 @@ export async function GETDrivers(driverNumber?: number, sessionKey?: number): Pr
   return cachedFetch<Driver[]>(url);
 }
 
+export interface Meeting {
+  meeting_key: number;
+  meeting_name: string;
+  meeting_official_name: string;
+  location: string;
+  country_key: number;
+  country_code: string;
+  country_name: string;
+  country_flag?: string;
+  circuit_key: number;
+  circuit_short_name: string;
+  circuit_type?: string;
+  circuit_info_url?: string;
+  circuit_image?: string;
+  gmt_offset: string;
+  date_start: string;
+  date_end: string;
+  year: number;
+  is_cancelled?: boolean;
+}
+
+export async function GETMeetings(year?: number): Promise<Meeting[]> {
+  const params = new URLSearchParams();
+  if (year !== undefined) {
+    params.append('year', year.toString());
+  }
+
+  const queryString = params.toString();
+  const url = `${API_URL}meetings${queryString ? `?${queryString}` : ''}`;
+  return cachedFetch<Meeting[]>(url);
+}
+
 export interface Session {
   session_key: number;
   session_name: string;
@@ -87,17 +118,20 @@ export interface Session {
   circuit_key: number;
   circuit_short_name: string;
   year: number;
+  is_cancelled?: boolean;
 }
 
 export async function GETSessions(
   countryName?: string,
   sessionName?: string,
-  year?: number
+  year?: number,
+  meetingKey?: number
 ): Promise<Session[]> {
   const params = new URLSearchParams();
   if (countryName) params.append('country_name', countryName);
   if (sessionName) params.append('session_name', sessionName);
-  if (year) params.append('year', year.toString());
+  if (year !== undefined) params.append('year', year.toString());
+  if (meetingKey !== undefined) params.append('meeting_key', meetingKey.toString());
 
   const queryString = params.toString();
   const url = `${API_URL}sessions${queryString ? `?${queryString}` : ''}`;

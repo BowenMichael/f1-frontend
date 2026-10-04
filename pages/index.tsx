@@ -12,8 +12,8 @@ import {
   ActionIcon,
   Tooltip,
 } from '@mantine/core';
-import { IconFlag, IconUsers, IconRefresh } from '@tabler/icons-react';
-import { Welcome } from '../components/Welcome/Welcome';
+import { IconFlag, IconRefresh, IconCalendar } from '@tabler/icons-react';
+import { RaceExplorer } from '../components/RaceExplorer/RaceExplorer';
 import { ColorSchemeToggle } from '../components/ColorSchemeToggle/ColorSchemeToggle';
 import { Leaderboard } from '../components/Leaderboard/Leaderboard';
 import {
@@ -118,7 +118,7 @@ export default function HomePage() {
 
   return (
     <Container size="xl" py="xl">
-      {/* Top Header & Session Selector bar */}
+      {/* Top Header & Navigation Bar */}
       <Paper withBorder p="md" radius="md" mb="xl" shadow="xs">
         <Group justify="space-between" align="center" wrap="wrap" gap="md">
           <Group gap="xs">
@@ -128,41 +128,45 @@ export default function HomePage() {
                 Formula 1 Live & Static Timing
               </Title>
               <Text size="xs" c="dimmed">
-                Powered by OpenF1 REST API • Milestone 2 Leaderboard
+                Powered by OpenF1 REST API • Leaderboard & Calendar Replay
               </Text>
             </div>
           </Group>
 
           <Group gap="sm" align="center">
-            <Select
-              data={sessionList}
-              value={selectedSessionKey}
-              onChange={(val) => {
-                if (val) setSelectedSessionKey(val);
-              }}
-              placeholder="Select Grand Prix Session"
-              searchable
-              w={340}
-              radius="md"
-            />
-            <Tooltip label="Refresh Timing Data">
-              <ActionIcon
-                variant="light"
-                color="red"
-                size="lg"
-                radius="md"
-                onClick={() => fetchSessionTimingData(selectedSessionKey)}
-                loading={loading}
-              >
-                <IconRefresh size="1.2rem" />
-              </ActionIcon>
-            </Tooltip>
+            {activeTab === 'leaderboard' && (
+              <>
+                <Select
+                  data={sessionList}
+                  value={selectedSessionKey}
+                  onChange={(val) => {
+                    if (val) setSelectedSessionKey(val);
+                  }}
+                  placeholder="Select Grand Prix Session"
+                  searchable
+                  w={340}
+                  radius="md"
+                />
+                <Tooltip label="Refresh Timing Data">
+                  <ActionIcon
+                    variant="light"
+                    color="red"
+                    size="lg"
+                    radius="md"
+                    onClick={() => fetchSessionTimingData(selectedSessionKey)}
+                    loading={loading}
+                  >
+                    <IconRefresh size="1.2rem" />
+                  </ActionIcon>
+                </Tooltip>
+              </>
+            )}
             <ColorSchemeToggle />
           </Group>
         </Group>
       </Paper>
 
-      {/* Tabs navigation: Leaderboard (Milestone 2) & Drivers Grid (Milestone 1) */}
+      {/* Tabs navigation: Leaderboard (Milestone 2) & Race Calendar Explorer */}
       <Tabs value={activeTab} onChange={setActiveTab} radius="md" variant="pills" mb="lg">
         <Tabs.List>
           <Tabs.Tab
@@ -176,8 +180,8 @@ export default function HomePage() {
           >
             Timing Leaderboard
           </Tabs.Tab>
-          <Tabs.Tab value="drivers" leftSection={<IconUsers size="1rem" />}>
-            Driver Lineup Cards
+          <Tabs.Tab value="calendar" leftSection={<IconCalendar size="1rem" />}>
+            Race Calendar & Drivers
           </Tabs.Tab>
         </Tabs.List>
 
@@ -195,8 +199,8 @@ export default function HomePage() {
           </Stack>
         </Tabs.Panel>
 
-        <Tabs.Panel value="drivers" pt="md">
-          <Welcome />
+        <Tabs.Panel value="calendar" pt="md">
+          <RaceExplorer />
         </Tabs.Panel>
       </Tabs>
     </Container>
