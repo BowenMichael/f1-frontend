@@ -7,8 +7,8 @@ The **GitHub Project Board** (`F1 Viewer - Sprint & Agent Board`) is the primary
 1. **Board Status Trigger**: Agents actively monitor the project board for items in the **`📋 Ready for Agent`** column.
 2. **Review User Comments First**: Before writing any code, the agent MUST read the latest comments on the issue to ingest user feedback, questions, and scope refinements.
 3. **State Transition**:
-   - Move the card on the Project Board to **`⚡ In Progress`**.
-   - Ensure the issue label is set to `agent:in-progress`.
+   - Move the card on the Project Board to **`⚡ In Progress`** (via GraphQL/API or Project Board UI).
+   - **CRITICAL RULE**: Do NOT add, remove, or modify labels/tags on the issue itself. Status is tracked solely on the Project Board.
 4. **Mandatory Issue Takeover Comment**:
    The agent **MUST immediately comment** on the GitHub issue acknowledging the user's specific comments and outlining the updated plan:
    ```markdown
@@ -43,13 +43,13 @@ To prevent interference with the user's active editor, other agent sessions, or 
      ```bash
      git worktree remove .worktrees/issue-<number>
      ```
-   - Tag the issue with `agent:review`.
+   - Move the card on the Project Board to **`🔍 In Review`** (do NOT add issue tags).
 
 ### C. Issue & Project Board Synchronization (Anti-Duplication Protocol)
 To ensure multiple agents or team members never duplicate work:
 1. **Check Claim Status First**:
-   - Before taking any action on an issue, verify it is strictly in `agent:ready` state and has no active worktree in `.worktrees/`.
-   - If an issue is already labeled `agent:in-progress`, `agent:needs-approval`, or has an active worktree, **DO NOT TOUCH IT**.
+   - Before taking any action on an issue, verify its Project Board status is `📋 Ready for Agent` and has no active worktree in `.worktrees/`.
+   - If an issue is already in `⚡ In Progress` or has an active worktree, **DO NOT TOUCH IT**.
 2. **Immediate Project Board Update**:
    - Move the card on the GitHub Project Board to **`⚡ In Progress`** upon takeover.
 3. **Always Post Deliverables Directly to the GitHub Issue**:
@@ -57,8 +57,8 @@ To ensure multiple agents or team members never duplicate work:
    - All architecture specifications, deployment guides, research findings, and task completions must be posted as formal comments on the GitHub issue.
 4. **Mark Acceptance Criteria Checkboxes**:
    - When criteria are satisfied, the agent MUST update the GitHub issue body via API to check off the boxes (`- [x]`).
-5. **Move to Review**:
-   - Once all criteria are met, update the issue labels to `agent:review` and move the card on the Project Board to **`🔍 In Review`**.
+5. **Move to Review on Project Board**:
+   - Once all criteria are met, move the card on the Project Board to **`🔍 In Review`** (Never add label tags to the issue).
 
 ---
 
