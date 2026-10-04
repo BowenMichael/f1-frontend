@@ -32,7 +32,7 @@ export function TelemetryComparison({ sessionKey, drivers, laps }: TelemetryComp
   useEffect(() => {
     if (!driverA || !driverB || !sessionKey) {
       setChartData([]);
-      return;
+      return () => {};
     }
 
     let isMounted = true;
@@ -100,11 +100,7 @@ export function TelemetryComparison({ sessionKey, drivers, laps }: TelemetryComp
           </Alert>
         )}
 
-        <TelemetryChart
-          data={chartData}
-          driverAName={driverAName}
-          driverBName={driverBName}
-        />
+        <TelemetryChart data={chartData} driverAName={driverAName} driverBName={driverBName} />
       </Stack>
     </Paper>
   );
