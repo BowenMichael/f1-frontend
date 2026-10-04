@@ -10,7 +10,7 @@
     "export": "next build && next export",
     "typecheck": "tsc --noEmit",
     "lint": "next lint && npm run lint:stylelint",
-    "lint:stylelint": "stylelint '**/*.css' --cache",
+    "lint:stylelint": "stylelint \"**/*.css\" --cache",
     "jest": "jest",
     "jest:watch": "jest --watch",
     "prettier:check": "prettier --check \"**/*.{ts,tsx}\"",
