@@ -1,0 +1,29 @@
+.title {
+  color: light-dark(var(--mantine-color-black), var(--mantine-color-white));
+  font-size: rem(42px);
+  font-weight: 900;
+  letter-spacing: rem(-1px);
+
+  @media (max-width: $mantine-breakpoint-md) {
+    font-size: rem(32px);
+  }
+}
+
+.meetingCard {
+  cursor: pointer;
+  transition: transform 150ms ease, border-color 150ms ease, box-shadow 150ms ease;
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--mantine-shadow-md);
+  }
+}
+
+.driverCard {
+  transition: transform 150ms ease, box-shadow 150ms ease;
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--mantine-shadow-sm);
+  }
+}

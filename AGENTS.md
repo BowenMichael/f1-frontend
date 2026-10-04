@@ -2,23 +2,24 @@
 
 ## 1. Autonomous Task Lifecycle & Worktree Isolation
 
-### A. Issue Takeover Notification
-When picking up an issue from GitHub (`BowenMichael/f1-frontend`):
-1. **Selection**: Look for issues labeled `agent:ready`.
-2. **State Transition**:
-   - Remove label `agent:ready`.
-   - Add label `agent:in-progress`.
-3. **Mandatory Issue Takeover Comment**:
-   The agent **MUST immediately comment** on the GitHub issue to notify the team that work has begun:
+### A. Board Status-Driven Takeover & Comment Ingestion
+The **GitHub Project Board** (`F1 Viewer - Sprint & Agent Board`) is the primary driver of agent task execution:
+1. **Board Status Trigger**: Agents actively monitor the project board for items in the **`📋 Ready for Agent`** column.
+2. **Review User Comments First**: Before writing any code, the agent MUST read the latest comments on the issue to ingest user feedback, questions, and scope refinements.
+3. **State Transition**:
+   - Move the card on the Project Board to **`⚡ In Progress`** (via GraphQL/API or Project Board UI).
+   - **CRITICAL RULE**: Do NOT add, remove, or modify labels/tags on the issue itself. Status is tracked solely on the Project Board.
+4. **Mandatory Issue Takeover Comment**:
+   The agent **MUST immediately comment** on the GitHub issue acknowledging the user's specific comments and outlining the updated plan:
    ```markdown
    🤖 **Agent Takeover: Development Started**
 
+   - **Feedback Acknowledged**: [Briefly address the user's latest comment/request]
    - **Worktree**: `.worktrees/issue-<number>`
    - **Branch**: `feat/issue-<number>-<short-description>`
-   - **Target Session / Endpoint**: [e.g. OpenF1 Drivers/Sessions]
    - **Planned Approach**:
-     1. [Step 1: Interface / Schema definition]
-     2. [Step 2: Component implementation]
+     1. [Step 1: Next immediate deliverable]
+     2. [Step 2: Component / Implementation]
      3. [Step 3: Verification & demo video recording]
    - **Budget Guardrail**: Max 15 tool execution turns before pause & approval.
    ```
@@ -26,23 +27,45 @@ When picking up an issue from GitHub (`BowenMichael/f1-frontend`):
 ### B. Git Worktree Isolation (Strictly Required)
 To prevent interference with the user's active editor, other agent sessions, or local uncommitted changes:
 1. **Never work in the root directory**: All feature development must occur in an isolated Git worktree.
-2. **Worktree Creation**:
+2. **Worktree Creation & Upstream Sync**:
    ```bash
    git worktree add -b feat/issue-<number>-<short-description> .worktrees/issue-<number> master
    ```
+   *Always pull/merge the latest upstream changes into the worktree branch before beginning work:*
+   ```bash
+   git fetch origin
+   git merge origin/master # or default branch (main/master)
+   ```
 3. **Execution**:
    - All file edits, typechecks, component creation, and commits must be scoped to `.worktrees/issue-<number>`.
+   - **Mandatory Visual Verification**: For any UI changes, agents must capture screenshots and record short interactive video demonstrations. Run `npm run test:visual` using the template script (`test-utils/visual-demo.spec.ts`). See `docs/VISUAL_VERIFICATION_GUIDE.md` for full instructions.
 4. **Completion & Cleanup**:
    - Push the branch from the worktree:
      ```bash
      git push origin feat/issue-<number>-<short-description>
      ```
-   - Open the Pull Request linking to the issue with demo video and screenshots.
+   - Before opening a PR, run `yarn pr:capture` to generate visuals in `.pr-visuals/`.
+   - Open the Pull Request linking to the issue with demo video, screenshots, and **a direct link to the active development server or preview environment**. PRs should include the generated demo video and screenshots attached in the PR description.
    - Clean up the worktree once the branch is pushed:
      ```bash
      git worktree remove .worktrees/issue-<number>
      ```
-   - Tag the issue with `agent:review`.
+   - Move the card on the Project Board to **`🔍 In Review`** (do NOT add issue tags).
+
+### C. Issue & Project Board Synchronization (Anti-Duplication Protocol)
+To ensure multiple agents or team members never duplicate work:
+1. **Check Claim Status First**:
+   - Before taking any action on an issue, verify its Project Board status is `📋 Ready for Agent` and has no active worktree in `.worktrees/`.
+   - If an issue is already in `⚡ In Progress` or has an active worktree, **DO NOT TOUCH IT**.
+2. **Immediate Project Board Update**:
+   - Move the card on the GitHub Project Board to **`⚡ In Progress`** upon takeover.
+3. **Always Post Deliverables Directly to the GitHub Issue**:
+   - **Never keep answers only in local IDE chat.**
+   - All architecture specifications, deployment guides, research findings, and task completions must be posted as formal comments on the GitHub issue.
+4. **Mark Acceptance Criteria Checkboxes**:
+   - When criteria are satisfied, the agent MUST update the GitHub issue body via API to check off the boxes (`- [x]`).
+5. **Move to Review on Project Board**:
+   - Once all criteria are met, move the card on the Project Board to **`🔍 In Review`** (Never add label tags to the issue).
 
 ---
 
@@ -72,3 +95,27 @@ When a threshold is reached, the agent **MUST IMMEDIATELY PAUSE** execution on t
    ```
 3. **Await User Approval**:
    - The agent MUST NOT take further code modification actions until the user explicitly responds with approval to proceed.
+
+---
+
+## 3. 🔄 Template Synchronization Protocol (Upstream Feedback Loop)
+
+To prevent fragmentation and ensure learnings, guardrails, and workflow improvements benefit the entire agent ecosystem:
+
+1. **Check Sync Divergence**:
+   - When introducing improvements to agent guidelines (`AGENTS.md`), issue templates, workflows, or MCP configuration, run:
+     ```bash
+     node scripts/agent-sync.js --status
+     ```
+2. **Propose Improvements Upstream**:
+   - To propagate agent framework enhancements back to `BowenMichael/agent-starter-template`, run:
+     ```bash
+     node scripts/agent-sync.js --push
+     ```
+   - Alternatively, automated CI (`.github/workflows/agent-template-sync.yml`) will propose a PR upon merging changes to master.
+3. **Ingest Upstream Updates**:
+   - Before starting major agent refactoring tasks, agents may check for upstream template updates:
+     ```bash
+     node scripts/agent-sync.js --pull
+     ```
+
