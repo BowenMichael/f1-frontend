@@ -1,4 +1,5 @@
 module.exports = {
+  root: true,
   extends: ['mantine', 'plugin:@next/next/recommended', 'plugin:jest/recommended'],
   plugins: ['testing-library', 'jest'],
   overrides: [

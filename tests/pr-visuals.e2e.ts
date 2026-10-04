@@ -23,23 +23,28 @@ test.describe('PR Visual Capture', () => {
     await page.evaluate(() => {
       window.scrollTo(0, document.body.scrollHeight / 2);
     });
-    
+
     // Wait briefly to capture the scrolled state in the video
     await page.waitForTimeout(1000);
-    
+
     // Return to top
     await page.evaluate(() => {
       window.scrollTo(0, 0);
     });
 
     await page.waitForTimeout(1000);
-    
+
     // If there's a theme toggle (common in Mantine templates), we can toggle it and capture
-    const colorSchemeToggle = await page.$('button[title="Toggle color scheme"], button[aria-label="Toggle color scheme"], button:has(svg)');
+    const colorSchemeToggle = await page.$(
+      'button[title="Toggle color scheme"], button[aria-label="Toggle color scheme"], button:has(svg)'
+    );
     if (colorSchemeToggle) {
-        await colorSchemeToggle.click();
-        await page.waitForTimeout(1000);
-        await page.screenshot({ path: path.join(screenshotDir, 'home-page-dark-mode.png'), fullPage: true });
+      await colorSchemeToggle.click();
+      await page.waitForTimeout(1000);
+      await page.screenshot({
+        path: path.join(screenshotDir, 'home-page-dark-mode.png'),
+        fullPage: true,
+      });
     }
   });
 });
