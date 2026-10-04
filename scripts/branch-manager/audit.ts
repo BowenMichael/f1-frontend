@@ -17,27 +17,35 @@ export function auditBranches(): BranchInfo[] {
   }
 
   const localOutput = execSync('git branch', { encoding: 'utf8' });
-  const localBranches = localOutput.trim().split('\n')
-    .map(b => b.replace(/^[\s*+]+/, '').trim())
-    .filter(b => b);
+  const localBranches = localOutput
+    .trim()
+    .split('\n')
+    .map((b) => b.replace(/^[\s*+]+/, '').trim())
+    .filter((b) => b);
 
   const mergedLocalOutput = execSync('git branch --merged master', { encoding: 'utf8' });
   const mergedLocal = new Set(
-    mergedLocalOutput.trim().split('\n')
-      .map(b => b.replace(/^[\s*+]+/, '').trim())
-      .filter(b => b)
+    mergedLocalOutput
+      .trim()
+      .split('\n')
+      .map((b) => b.replace(/^[\s*+]+/, '').trim())
+      .filter((b) => b)
   );
 
   const remoteOutput = execSync('git branch -r', { encoding: 'utf8' });
-  const remoteBranches = remoteOutput.trim().split('\n')
-    .map(b => b.trim())
-    .filter(b => b && !b.includes('->'));
+  const remoteBranches = remoteOutput
+    .trim()
+    .split('\n')
+    .map((b) => b.trim())
+    .filter((b) => b && !b.includes('->'));
 
   const mergedRemoteOutput = execSync('git branch -r --merged origin/master', { encoding: 'utf8' });
   const mergedRemote = new Set(
-    mergedRemoteOutput.trim().split('\n')
-      .map(b => b.trim())
-      .filter(b => b && !b.includes('->'))
+    mergedRemoteOutput
+      .trim()
+      .split('\n')
+      .map((b) => b.trim())
+      .filter((b) => b && !b.includes('->'))
   );
 
   const allBranches: BranchInfo[] = [];
@@ -49,7 +57,7 @@ export function auditBranches(): BranchInfo[] {
       isRemote: false,
       isMerged: mergedLocal.has(branch),
       isActiveWorktree: activeBranchesMap.has(branch),
-      worktreePath: activeBranchesMap.get(branch)
+      worktreePath: activeBranchesMap.get(branch),
     });
   }
 
@@ -61,7 +69,7 @@ export function auditBranches(): BranchInfo[] {
       isRemote: true,
       isMerged: mergedRemote.has(branch),
       isActiveWorktree: activeBranchesMap.has(localName),
-      worktreePath: activeBranchesMap.get(localName)
+      worktreePath: activeBranchesMap.get(localName),
     });
   }
 
