@@ -30,9 +30,7 @@ export function Welcome() {
       .then((data) => {
         if (!isMounted) return;
         // Filter out duplicate driver records if present in session responses
-        const uniqueDrivers = Array.from(
-          new Map(data.map((d) => [d.driver_number, d])).values()
-        );
+        const uniqueDrivers = Array.from(new Map(data.map((d) => [d.driver_number, d])).values());
         setDrivers(uniqueDrivers);
         setLoading(false);
       })
@@ -51,12 +49,7 @@ export function Welcome() {
     <Container size="lg" py="xl">
       <Title className={classes.title} ta="center" mt={40}>
         Welcome to{' '}
-        <Text
-          inherit
-          variant="gradient"
-          component="span"
-          gradient={{ from: 'red', to: 'orange' }}
-        >
+        <Text inherit variant="gradient" component="span" gradient={{ from: 'red', to: 'orange' }}>
           F1 Viewer
         </Text>
       </Title>
@@ -90,9 +83,7 @@ export function Welcome() {
         {!loading && !error && drivers.length > 0 && (
           <SimpleGrid cols={{ base: 1, sm: 2, md: 3, lg: 4 }} spacing="lg">
             {drivers.map((driver) => {
-              const teamColor = driver.team_colour
-                ? `#${driver.team_colour}`
-                : '#e03131';
+              const teamColor = driver.team_colour ? `#${driver.team_colour}` : '#e03131';
 
               return (
                 <Card
@@ -160,4 +151,3 @@ export function Welcome() {
     </Container>
   );
 }
-

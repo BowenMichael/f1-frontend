@@ -137,3 +137,12 @@ dist
 .pnp.*
 
 .DS_Store
+.vercel
+.env*
+
+# PR Visuals
+.pr-visuals/
+
+# Playwright artifacts
+test-results/
+playwright-report/

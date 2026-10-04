@@ -7,8 +7,8 @@ The **GitHub Project Board** (`F1 Viewer - Sprint & Agent Board`) is the primary
 1. **Board Status Trigger**: Agents actively monitor the project board for items in the **`📋 Ready for Agent`** column.
 2. **Review User Comments First**: Before writing any code, the agent MUST read the latest comments on the issue to ingest user feedback, questions, and scope refinements.
 3. **State Transition**:
-   - Move the card on the Project Board to **`⚡ In Progress`**.
-   - Ensure the issue label is set to `agent:in-progress`.
+   - Move the card on the Project Board to **`⚡ In Progress`** (via GraphQL/API or Project Board UI).
+   - **CRITICAL RULE**: Do NOT add, remove, or modify labels/tags on the issue itself. Status is tracked solely on the Project Board.
 4. **Mandatory Issue Takeover Comment**:
    The agent **MUST immediately comment** on the GitHub issue acknowledging the user's specific comments and outlining the updated plan:
    ```markdown
@@ -27,29 +27,36 @@ The **GitHub Project Board** (`F1 Viewer - Sprint & Agent Board`) is the primary
 ### B. Git Worktree Isolation (Strictly Required)
 To prevent interference with the user's active editor, other agent sessions, or local uncommitted changes:
 1. **Never work in the root directory**: All feature development must occur in an isolated Git worktree.
-2. **Worktree Creation**:
+2. **Worktree Creation & Upstream Sync**:
    ```bash
    git worktree add -b feat/issue-<number>-<short-description> .worktrees/issue-<number> master
    ```
+   *Always pull/merge the latest upstream changes into the worktree branch before beginning work:*
+   ```bash
+   git fetch origin
+   git merge origin/master # or default branch (main/master)
+   ```
 3. **Execution**:
    - All file edits, typechecks, component creation, and commits must be scoped to `.worktrees/issue-<number>`.
+   - **Mandatory Visual Verification**: For any UI changes, agents must capture screenshots and record short interactive video demonstrations. Run `npm run test:visual` using the template script (`test-utils/visual-demo.spec.ts`). See `docs/VISUAL_VERIFICATION_GUIDE.md` for full instructions.
 4. **Completion & Cleanup**:
    - Push the branch from the worktree:
      ```bash
      git push origin feat/issue-<number>-<short-description>
      ```
-   - Open the Pull Request linking to the issue with demo video and screenshots.
+   - Before opening a PR, run `yarn pr:capture` to generate visuals in `.pr-visuals/`.
+   - Open the Pull Request linking to the issue with demo video, screenshots, and **a direct link to the active development server or preview environment**. PRs should include the generated demo video and screenshots attached in the PR description.
    - Clean up the worktree once the branch is pushed:
      ```bash
      git worktree remove .worktrees/issue-<number>
      ```
-   - Tag the issue with `agent:review`.
+   - Move the card on the Project Board to **`🔍 In Review`** (do NOT add issue tags).
 
 ### C. Issue & Project Board Synchronization (Anti-Duplication Protocol)
 To ensure multiple agents or team members never duplicate work:
 1. **Check Claim Status First**:
-   - Before taking any action on an issue, verify it is strictly in `agent:ready` state and has no active worktree in `.worktrees/`.
-   - If an issue is already labeled `agent:in-progress`, `agent:needs-approval`, or has an active worktree, **DO NOT TOUCH IT**.
+   - Before taking any action on an issue, verify its Project Board status is `📋 Ready for Agent` and has no active worktree in `.worktrees/`.
+   - If an issue is already in `⚡ In Progress` or has an active worktree, **DO NOT TOUCH IT**.
 2. **Immediate Project Board Update**:
    - Move the card on the GitHub Project Board to **`⚡ In Progress`** upon takeover.
 3. **Always Post Deliverables Directly to the GitHub Issue**:
@@ -57,8 +64,8 @@ To ensure multiple agents or team members never duplicate work:
    - All architecture specifications, deployment guides, research findings, and task completions must be posted as formal comments on the GitHub issue.
 4. **Mark Acceptance Criteria Checkboxes**:
    - When criteria are satisfied, the agent MUST update the GitHub issue body via API to check off the boxes (`- [x]`).
-5. **Move to Review**:
-   - Once all criteria are met, update the issue labels to `agent:review` and move the card on the Project Board to **`🔍 In Review`**.
+5. **Move to Review on Project Board**:
+   - Once all criteria are met, move the card on the Project Board to **`🔍 In Review`** (Never add label tags to the issue).
 
 ---
 
