@@ -10,12 +10,13 @@
     "export": "next build && next export",
     "typecheck": "tsc --noEmit",
     "lint": "next lint && npm run lint:stylelint",
-    "lint:stylelint": "stylelint '**/*.css' --cache",
+    "lint:stylelint": "stylelint \"**/*.css\" --cache --allow-empty-input",
     "jest": "jest",
     "jest:watch": "jest --watch",
     "prettier:check": "prettier --check \"**/*.{ts,tsx}\"",
     "prettier:write": "prettier --write \"**/*.{ts,tsx}\"",
     "test": "npm run prettier:check && npm run lint && npm run typecheck && npm run jest",
+    "test:visual": "playwright test -c playwright.config.ts",
     "storybook": "storybook dev -p 6006",
     "storybook:build": "storybook build"
   },
@@ -26,11 +27,13 @@
     "@tabler/icons-react": "^2.40.0",
     "next": "14.0.1",
     "react": "18.2.0",
-    "react-dom": "18.2.0"
+    "react-dom": "18.2.0",
+    "recharts": "^2.12.0"
   },
   "devDependencies": {
     "@babel/core": "^7.23.2",
     "@next/eslint-plugin-next": "^14.0.1",
+    "@playwright/test": "^1.63.0",
     "@storybook/addon-essentials": "^7.5.2",
     "@storybook/addon-styling-webpack": "^0.0.5",
     "@storybook/blocks": "^7.5.2",
@@ -44,6 +47,7 @@
     "@types/jest": "^29.5.7",
     "@types/node": "^20.8.10",
     "@types/react": "18.2.35",
+    "@types/recharts": "^1.8.29",
     "@typescript-eslint/eslint-plugin": "^6.9.1",
     "@typescript-eslint/parser": "^6.9.1",
     "babel-loader": "^9.1.3",
