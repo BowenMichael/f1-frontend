@@ -18,6 +18,8 @@ export function useReplayClock({ startTime, endTime, initialSpeed = 1 }: UseRepl
   const lastFrameTimeRef = useRef<number>(0);
   const animFrameIdRef = useRef<number | null>(null);
 
+  const lastStateUpdateTimeRef = useRef<number>(0);
+
   useEffect(() => {
     isPlayingRef.current = isPlaying;
   }, [isPlaying]);
@@ -42,11 +44,21 @@ export function useReplayClock({ startTime, endTime, initialSpeed = 1 }: UseRepl
         const nextTime = currentTimeRef.current + deltaMs * speedRef.current;
         if (nextTime >= endTime) {
           currentTimeRef.current = endTime;
+          if (typeof window !== 'undefined') {
+            window.dispatchEvent(new CustomEvent('replayTick', { detail: endTime }));
+          }
           setCurrentTime(endTime);
           setIsPlaying(false);
         } else {
           currentTimeRef.current = nextTime;
-          setCurrentTime(nextTime);
+          if (typeof window !== 'undefined') {
+            window.dispatchEvent(new CustomEvent('replayTick', { detail: nextTime }));
+          }
+          // Throttle React state update for controls slider to avoid full re-rendering at 60fps
+          if (now - lastStateUpdateTimeRef.current >= 100) {
+            lastStateUpdateTimeRef.current = now;
+            setCurrentTime(nextTime);
+          }
         }
       }
 
@@ -69,6 +81,9 @@ export function useReplayClock({ startTime, endTime, initialSpeed = 1 }: UseRepl
     setIsPlaying((prev) => {
       if (!prev && currentTimeRef.current >= endTime) {
         currentTimeRef.current = startTime;
+        if (typeof window !== 'undefined') {
+          window.dispatchEvent(new CustomEvent('replayTick', { detail: startTime }));
+        }
         setCurrentTime(startTime);
       }
       return !prev;
@@ -79,6 +94,9 @@ export function useReplayClock({ startTime, endTime, initialSpeed = 1 }: UseRepl
     (targetTime: number) => {
       const bounded = Math.max(startTime, Math.min(endTime, targetTime));
       currentTimeRef.current = bounded;
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('replayTick', { detail: bounded }));
+      }
       setCurrentTime(bounded);
     },
     [startTime, endTime]
@@ -87,6 +105,9 @@ export function useReplayClock({ startTime, endTime, initialSpeed = 1 }: UseRepl
   const reset = useCallback(() => {
     setIsPlaying(false);
     currentTimeRef.current = startTime;
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('replayTick', { detail: startTime }));
+    }
     setCurrentTime(startTime);
   }, [startTime]);
 
