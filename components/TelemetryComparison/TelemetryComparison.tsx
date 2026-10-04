@@ -30,7 +30,7 @@ export function TelemetryComparison({ sessionKey, drivers, laps }: TelemetryComp
   }, [drivers, sessionKey]);
 
   useEffect(() => {
-    if (!driverA || !driverB || !sessionKey) {
+    if (!sessionKey || (!driverA && !driverB)) {
       setChartData([]);
       return () => {};
     }
@@ -40,16 +40,16 @@ export function TelemetryComparison({ sessionKey, drivers, laps }: TelemetryComp
     setError(null);
 
     Promise.all([
-      fetchDriverFastestLapTelemetry(sessionKey, driverA, laps),
-      fetchDriverFastestLapTelemetry(sessionKey, driverB, laps),
+      driverA ? fetchDriverFastestLapTelemetry(sessionKey, driverA, laps) : Promise.resolve([]),
+      driverB ? fetchDriverFastestLapTelemetry(sessionKey, driverB, laps) : Promise.resolve([]),
     ])
       .then(([telemetryA, telemetryB]) => {
         if (!isMounted) return;
-        if (!telemetryA.length && !telemetryB.length) {
-          setError('No telemetry data available for the selected drivers.');
+        if ((!telemetryA || !telemetryA.length) && (!telemetryB || !telemetryB.length)) {
+          setError('No telemetry data available for the selected driver(s).');
           setChartData([]);
         } else {
-          const aligned = alignTelemetry(telemetryA, telemetryB);
+          const aligned = alignTelemetry(telemetryA || [], telemetryB || []);
           setChartData(aligned);
         }
         setLoading(false);
@@ -68,12 +68,16 @@ export function TelemetryComparison({ sessionKey, drivers, laps }: TelemetryComp
   const driverAObj = drivers.find((d) => d.driver_number === driverA);
   const driverBObj = drivers.find((d) => d.driver_number === driverB);
 
-  const driverAName = driverAObj
-    ? driverAObj.name_acronym || driverAObj.broadcast_name || `Driver #${driverA}`
-    : 'Driver A';
-  const driverBName = driverBObj
-    ? driverBObj.name_acronym || driverBObj.broadcast_name || `Driver #${driverB}`
-    : 'Driver B';
+  const driverAName = driverA
+    ? driverAObj
+      ? driverAObj.name_acronym || driverAObj.broadcast_name || `Driver #${driverA}`
+      : `Driver #${driverA}`
+    : '';
+  const driverBName = driverB
+    ? driverBObj
+      ? driverBObj.name_acronym || driverBObj.broadcast_name || `Driver #${driverB}`
+      : `Driver #${driverB}`
+    : '';
 
   return (
     <Paper withBorder p="md" radius="md" pos="relative">

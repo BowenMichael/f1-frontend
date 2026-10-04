@@ -239,14 +239,20 @@ export async function GETCarData(
   const params = new URLSearchParams();
   params.append('session_key', sessionKey.toString());
   params.append('driver_number', driverNumber.toString());
+
+  let queryString = params.toString();
   if (dateStart) {
-    params.append('date>=', dateStart);
+    queryString += `&date>=${dateStart}`;
   }
   if (dateEnd) {
-    params.append('date<=', dateEnd);
+    queryString += `&date<=${dateEnd}`;
   }
 
-  const queryString = params.toString();
   const url = `${API_URL}car_data?${queryString}`;
-  return cachedFetch<any[]>(url);
+  try {
+    const data = await cachedFetch<any[]>(url);
+    return Array.isArray(data) ? data : [];
+  } catch (err) {
+    return [];
+  }
 }
