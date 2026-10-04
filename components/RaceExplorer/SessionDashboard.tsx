@@ -90,18 +90,12 @@ export function SessionDashboard({ sessionKey }: SessionDashboardProps) {
       )}
 
       {!loading && !error && (
-        <Tabs defaultValue="leaderboard" color="red">
+        <Tabs defaultValue="leaderboard" color="red" keepMounted={false}>
           <Tabs.List mb="md">
-            <Tabs.Tab
-              value="leaderboard"
-              leftSection={<IconTrophy size="1.2rem" />}
-            >
+            <Tabs.Tab value="leaderboard" leftSection={<IconTrophy size="1.2rem" />}>
               Leaderboard
             </Tabs.Tab>
-            <Tabs.Tab
-              value="lineup"
-              leftSection={<IconUsers size="1.2rem" />}
-            >
+            <Tabs.Tab value="lineup" leftSection={<IconUsers size="1.2rem" />}>
               Driver Lineup
             </Tabs.Tab>
           </Tabs.List>

@@ -3,9 +3,6 @@ import {
   Title,
   Text,
   Container,
-  SimpleGrid,
-  Card,
-  Avatar,
   Badge,
   Group,
   Loader,
@@ -17,14 +14,8 @@ import {
   Paper,
   Divider,
 } from '@mantine/core';
-import {
-  GETMeetings,
-  GETSessions,
-  GETDrivers,
-  Meeting,
-  Session,
-  Driver,
-} from '../../lib/middleware';
+import { GETMeetings, GETSessions, Meeting, Session } from '../../lib/middleware';
+import { MeetingGrid } from './MeetingGrid';
 import { SessionDashboard } from './SessionDashboard';
 import classes from './RaceExplorer.module.css';
 
@@ -43,7 +34,6 @@ export function RaceExplorer() {
 
   const [selectedSessionKey, setSelectedSessionKey] = useState<number | null>(null);
 
-
   // Fetch meetings when selected season changes
   useEffect(() => {
     let isMounted = true;
@@ -52,7 +42,6 @@ export function RaceExplorer() {
     setSelectedMeetingKey(null);
     setSessions([]);
     setSelectedSessionKey(null);
-
 
     const yearNum = parseInt(selectedSeason, 10);
     GETMeetings(yearNum)
@@ -86,7 +75,6 @@ export function RaceExplorer() {
       setLoadingSessions(true);
       setSessionsError(null);
       setSelectedSessionKey(null);
-  
 
       GETSessions(undefined, undefined, undefined, selectedMeetingKey)
         .then((data) => {
@@ -114,8 +102,6 @@ export function RaceExplorer() {
       isMounted = false;
     };
   }, [selectedMeetingKey]);
-
-
 
   const selectedMeeting = meetings.find((m) => m.meeting_key === selectedMeetingKey);
 
@@ -174,50 +160,11 @@ export function RaceExplorer() {
 
         {/* Meetings Grid / List */}
         {!loadingMeetings && !meetingsError && (
-          <Box>
-            <Text fw={700} size="md" mb="sm">
-              Grand Prix Calendar ({meetings.length} Rounds)
-            </Text>
-            <SimpleGrid cols={{ base: 1, sm: 2, md: 3, lg: 4 }} spacing="md">
-              {meetings.map((meeting) => {
-                const isSelected = meeting.meeting_key === selectedMeetingKey;
-                return (
-                  <Card
-                    key={meeting.meeting_key}
-                    shadow="xs"
-                    p="md"
-                    radius="md"
-                    withBorder
-                    className={classes.meetingCard}
-                    style={{
-                      borderColor: isSelected ? 'var(--mantine-color-red-filled)' : undefined,
-                      borderWidth: isSelected ? '2px' : '1px',
-                      backgroundColor: isSelected
-                        ? 'light-dark(var(--mantine-color-red-0), rgba(224, 49, 49, 0.1))'
-                        : undefined,
-                    }}
-                    onClick={() => setSelectedMeetingKey(meeting.meeting_key)}
-                    data-testid={`meeting-card-${meeting.meeting_key}`}
-                  >
-                    <Group justify="space-between" mb={6}>
-                      <Badge variant={isSelected ? 'filled' : 'light'} color="red">
-                        {meeting.country_code || 'GP'}
-                      </Badge>
-                      <Text size="xs" c="dimmed">
-                        {meeting.circuit_short_name}
-                      </Text>
-                    </Group>
-                    <Text fw={700} size="sm" lineClamp={1}>
-                      {meeting.meeting_name}
-                    </Text>
-                    <Text size="xs" c="dimmed" mt={4}>
-                      {meeting.location}
-                    </Text>
-                  </Card>
-                );
-              })}
-            </SimpleGrid>
-          </Box>
+          <MeetingGrid
+            meetings={meetings}
+            selectedMeetingKey={selectedMeetingKey}
+            onSelectMeeting={setSelectedMeetingKey}
+          />
         )}
 
         <Divider my="sm" />
@@ -273,9 +220,7 @@ export function RaceExplorer() {
             </Box>
 
             {/* Session Dashboard Section */}
-            {selectedSessionKey && (
-              <SessionDashboard sessionKey={selectedSessionKey} />
-            )}
+            {selectedSessionKey && <SessionDashboard sessionKey={selectedSessionKey} />}
           </Stack>
         )}
       </Stack>
