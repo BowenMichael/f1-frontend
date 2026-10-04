@@ -17,7 +17,7 @@ import { getAvailableSeasons } from '../../utils/seasons';
 import { useF1Data } from './hooks/useF1Data';
 import { MeetingGrid } from './components/MeetingGrid';
 import { SessionSelector } from './components/SessionSelector';
-import { DriverGrid } from './components/DriverGrid';
+import { SessionDashboard } from './SessionDashboard';
 import classes from './RaceExplorer.module.css';
 
 export function RaceExplorer() {
@@ -36,9 +36,6 @@ export function RaceExplorer() {
     sessionsError,
     selectedSessionKey,
     setSelectedSessionKey,
-    drivers,
-    loadingDrivers,
-    driversError,
   } = useF1Data();
 
   return (
@@ -107,7 +104,7 @@ export function RaceExplorer() {
 
         <Divider my="sm" />
 
-        {/* Session Selector & Driver Lineup Section */}
+        {/* Session Selector & Dashboard Section */}
         {selectedMeeting && (
           <Stack gap="lg">
             <Box>
@@ -146,36 +143,8 @@ export function RaceExplorer() {
               )}
             </Box>
 
-            {/* Drivers Section */}
-            <Box>
-              <Group justify="space-between" align="center" mb="md">
-                <Text fw={700} size="md">
-                  Participating Drivers Lineup
-                </Text>
-                {selectedSessionKey && !loadingDrivers && (
-                  <Badge variant="outline" color="gray">
-                    {drivers.length} Drivers
-                  </Badge>
-                )}
-              </Group>
-
-              {loadingDrivers && (
-                <Stack align="center" justify="center" py={50}>
-                  <Loader size="lg" color="red" />
-                  <Text c="dimmed" size="sm">
-                    Loading session driver lineup...
-                  </Text>
-                </Stack>
-              )}
-
-              {driversError && (
-                <Alert color="red" title="Unable to load drivers">
-                  {driversError}
-                </Alert>
-              )}
-
-              {!loadingDrivers && !driversError && <DriverGrid drivers={drivers} />}
-            </Box>
+            {/* Session Dashboard Section */}
+            {selectedSessionKey && <SessionDashboard sessionKey={selectedSessionKey} />}
           </Stack>
         )}
       </Stack>

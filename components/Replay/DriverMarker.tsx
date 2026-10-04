@@ -11,7 +11,7 @@ export interface DriverMarkerProps {
   viewBoxHeight?: number;
 }
 
-export function DriverMarker({
+export function DriverMarkerComponent({
   driver,
   points,
   boundingBox,
@@ -95,3 +95,13 @@ export function DriverMarker({
     </g>
   );
 }
+
+export const DriverMarker = React.memo(
+  DriverMarkerComponent,
+  (prevProps, nextProps) =>
+    prevProps.driver.x === nextProps.driver.x &&
+    prevProps.driver.y === nextProps.driver.y &&
+    prevProps.driver.acronym === nextProps.driver.acronym &&
+    prevProps.driver.teamColour === nextProps.driver.teamColour &&
+    prevProps.driver.driver_number === nextProps.driver.driver_number
+);

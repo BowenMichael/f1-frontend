@@ -34,32 +34,37 @@ export function useReplayClock({ startTime, endTime, initialSpeed = 1 }: UseRepl
 
   const tick = useCallback(
     (now: number) => {
+      if (!isPlayingRef.current) {
+        lastFrameTimeRef.current = 0;
+        return;
+      }
+
       if (!lastFrameTimeRef.current) {
         lastFrameTimeRef.current = now;
       }
       const deltaMs = now - lastFrameTimeRef.current;
       lastFrameTimeRef.current = now;
 
-      if (isPlayingRef.current) {
-        const nextTime = currentTimeRef.current + deltaMs * speedRef.current;
-        if (nextTime >= endTime) {
-          currentTimeRef.current = endTime;
-          if (typeof window !== 'undefined') {
-            window.dispatchEvent(new CustomEvent('replayTick', { detail: endTime }));
-          }
-          setCurrentTime(endTime);
-          setIsPlaying(false);
-        } else {
-          currentTimeRef.current = nextTime;
-          if (typeof window !== 'undefined') {
-            window.dispatchEvent(new CustomEvent('replayTick', { detail: nextTime }));
-          }
-          // Throttle React state update for controls slider to avoid full re-rendering at 60fps
-          if (now - lastStateUpdateTimeRef.current >= 100) {
-            lastStateUpdateTimeRef.current = now;
-            setCurrentTime(nextTime);
-          }
+      const nextTime = currentTimeRef.current + deltaMs * speedRef.current;
+      if (nextTime >= endTime) {
+        currentTimeRef.current = endTime;
+        if (typeof window !== 'undefined') {
+          window.dispatchEvent(new CustomEvent('replayTick', { detail: endTime }));
         }
+        setCurrentTime(endTime);
+        setIsPlaying(false);
+        lastFrameTimeRef.current = 0;
+        return;
+      }
+
+      currentTimeRef.current = nextTime;
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('replayTick', { detail: nextTime }));
+      }
+      // Throttle React state update for controls slider to avoid full re-rendering at 60fps
+      if (now - lastStateUpdateTimeRef.current >= 100) {
+        lastStateUpdateTimeRef.current = now;
+        setCurrentTime(nextTime);
       }
 
       animFrameIdRef.current = requestAnimationFrame(tick);
@@ -68,14 +73,23 @@ export function useReplayClock({ startTime, endTime, initialSpeed = 1 }: UseRepl
   );
 
   useEffect(() => {
-    lastFrameTimeRef.current = 0;
-    animFrameIdRef.current = requestAnimationFrame(tick);
+    if (isPlaying) {
+      lastFrameTimeRef.current = 0;
+      animFrameIdRef.current = requestAnimationFrame(tick);
+    } else {
+      if (animFrameIdRef.current) {
+        cancelAnimationFrame(animFrameIdRef.current);
+        animFrameIdRef.current = null;
+      }
+      lastFrameTimeRef.current = 0;
+    }
+
     return () => {
       if (animFrameIdRef.current) {
         cancelAnimationFrame(animFrameIdRef.current);
       }
     };
-  }, [tick]);
+  }, [isPlaying, tick]);
 
   const togglePlay = useCallback(() => {
     setIsPlaying((prev) => {

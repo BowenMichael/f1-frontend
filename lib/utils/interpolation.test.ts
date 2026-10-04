@@ -82,4 +82,10 @@ describe('interpolation', () => {
     const pos = interpolateCarPosition(mockPoints, tMid, 0);
     expect(pos?.index).toBe(0);
   });
+
+  it('uses hintIndex correctly for sequential lookup', () => {
+    const t1 = new Date('2023-09-03T13:00:01.000Z').getTime();
+    expect(findClosestPointIndex(mockPoints, t1, 0)).toBe(1);
+    expect(findClosestPointIndex(mockPoints, t1, 1)).toBe(1);
+  });
 });

@@ -4,7 +4,7 @@ export interface TrackSilhouetteProps {
   svgPath: string;
 }
 
-export function TrackSilhouette({ svgPath }: TrackSilhouetteProps) {
+function TrackSilhouetteComponent({ svgPath }: TrackSilhouetteProps) {
   if (!svgPath) return null;
 
   return (
@@ -57,3 +57,5 @@ export function TrackSilhouette({ svgPath }: TrackSilhouetteProps) {
     </g>
   );
 }
+
+export const TrackSilhouette = React.memo(TrackSilhouetteComponent);

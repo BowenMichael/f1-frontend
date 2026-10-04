@@ -6,6 +6,9 @@ jest.mock('../../lib/middleware', () => ({
   GETMeetings: jest.fn(),
   GETSessions: jest.fn(),
   GETDrivers: jest.fn(),
+  GETLaps: jest.fn().mockResolvedValue([]),
+  GETIntervals: jest.fn().mockResolvedValue([]),
+  GETStints: jest.fn().mockResolvedValue([]),
 }));
 
 jest.mock('../../utils/seasons', () => {
@@ -138,6 +141,9 @@ describe('RaceExplorer component', () => {
     (middleware.GETMeetings as jest.Mock).mockResolvedValue(mockMeetings);
     (middleware.GETSessions as jest.Mock).mockResolvedValue(mockSessions);
     (middleware.GETDrivers as jest.Mock).mockResolvedValue(mockDrivers);
+    (middleware.GETLaps as jest.Mock).mockResolvedValue([]);
+    (middleware.GETIntervals as jest.Mock).mockResolvedValue([]);
+    (middleware.GETStints as jest.Mock).mockResolvedValue([]);
   });
 
   it('renders title and loads meetings for default season', async () => {

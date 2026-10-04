@@ -7,6 +7,22 @@ export function getTimestamp(dateStr: string): number {
   return new Date(dateStr).getTime();
 }
 
+export interface TimestampedLocationPoint extends LocationPoint {
+  _timestamp?: number;
+}
+
+/**
+ * Gets cached timestamp or computes and caches it on the point.
+ */
+export function getPointTimestamp(point: TimestampedLocationPoint): number {
+  if (point._timestamp !== undefined) {
+    return point._timestamp;
+  }
+  const ts = new Date(point.date).getTime();
+  point._timestamp = ts;
+  return ts;
+}
+
 /**
  * Hermite / Catmull-Rom spline interpolation between p1 and p2 using tangent points p0 and p3.
  */
@@ -24,40 +40,36 @@ export function catmullRom(p0: number, p1: number, p2: number, p3: number, t: nu
 }
 
 /**
- * Finds the index of the first point where timestamp >= targetTime via binary search or linear cursor hint.
+ * Finds the index of the first point where timestamp >= targetTime via binary search or hint.
  */
 export function findClosestPointIndex(
-  points: LocationPoint[],
+  points: TimestampedLocationPoint[],
   targetTime: number,
   hintIndex?: number
 ): number {
-  if (points.length === 0) return 0;
+  const len = points.length;
+  if (len === 0) return 0;
 
-  // Optimized cursor check: If targetTime is sequentially right at or after hintIndex
-  if (hintIndex !== undefined && hintIndex >= 0 && hintIndex < points.length) {
-    const hintTime = getTimestamp(points[hintIndex].date);
-    if (hintTime === targetTime) {
-      return hintIndex;
-    }
-    // Check if within next few items (typical sequential playback)
-    if (hintTime < targetTime) {
-      let curr = hintIndex;
-      while (curr < points.length && getTimestamp(points[curr].date) < targetTime) {
-        curr += 1;
+  // Optimized temporal coherence check using hint
+  if (hintIndex !== undefined && hintIndex >= 0 && hintIndex < len) {
+    const hintTime = getPointTimestamp(points[hintIndex]);
+    if (hintTime <= targetTime) {
+      // Check next few points linearly
+      const forwardLimit = Math.min(len, hintIndex + 5);
+      for (let i = hintIndex; i < forwardLimit; i++) {
+        if (getPointTimestamp(points[i]) >= targetTime) {
+          return i;
+        }
       }
-      if (curr < points.length) {
-        return curr;
-      }
-      return points.length - 1;
     }
   }
 
   let low = 0;
-  let high = points.length - 1;
+  let high = len - 1;
 
   while (low <= high) {
-    const mid = Math.floor((low + high) / 2);
-    const midTime = getTimestamp(points[mid].date);
+    const mid = (low + high) >> 1;
+    const midTime = getPointTimestamp(points[mid]);
 
     if (midTime === targetTime) {
       return mid;
@@ -80,15 +92,15 @@ export interface InterpolationResult extends NormalizedPoint {
  * Interpolates coordinates for a given timestamp across location points using spline interpolation.
  */
 export function interpolateCarPosition(
-  points: LocationPoint[],
+  points: TimestampedLocationPoint[],
   targetTime: number,
   hintIndex?: number
 ): InterpolationResult | null {
   if (!points || points.length === 0) return null;
   if (points.length === 1) return { x: points[0].x, y: points[0].y, index: 0 };
 
-  const firstTime = getTimestamp(points[0].date);
-  const lastTime = getTimestamp(points[points.length - 1].date);
+  const firstTime = getPointTimestamp(points[0]);
+  const lastTime = getPointTimestamp(points[points.length - 1]);
 
   if (targetTime <= firstTime) {
     return { x: points[0].x, y: points[0].y, index: 0 };
@@ -104,8 +116,8 @@ export function interpolateCarPosition(
   const p1 = points[prevIdx];
   const p2 = points[Math.min(points.length - 1, nextIdx)];
 
-  const t1 = getTimestamp(p1.date);
-  const t2 = getTimestamp(p2.date);
+  const t1 = getPointTimestamp(p1);
+  const t2 = getPointTimestamp(p2);
 
   if (t2 <= t1) {
     return { x: p1.x, y: p1.y, index: prevIdx };

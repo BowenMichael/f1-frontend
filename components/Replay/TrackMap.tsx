@@ -12,7 +12,7 @@ export interface TrackMapProps {
   viewBoxHeight?: number;
 }
 
-export function TrackMap({
+function TrackMapComponent({
   svgPath,
   driverStates,
   locationsByDriver,
@@ -59,3 +59,5 @@ export function TrackMap({
     </div>
   );
 }
+
+export const TrackMap = React.memo(TrackMapComponent);

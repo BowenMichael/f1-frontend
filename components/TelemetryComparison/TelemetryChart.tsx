@@ -36,12 +36,16 @@ export function TelemetryChart({ data, driverAName, driverBName }: TelemetryChar
             Speed (km/h) vs. Lap Distance (%)
           </Text>
           <Group gap="xs">
-            <Badge color="blue" variant="light">
-              {driverAName} (Speed)
-            </Badge>
-            <Badge color="red" variant="light">
-              {driverBName} (Speed)
-            </Badge>
+            {driverAName && (
+              <Badge color="blue" variant="light">
+                {driverAName} (Speed)
+              </Badge>
+            )}
+            {driverBName && (
+              <Badge color="red" variant="light">
+                {driverBName} (Speed)
+              </Badge>
+            )}
           </Group>
         </Group>
 
@@ -59,30 +63,36 @@ export function TelemetryChart({ data, driverAName, driverBName }: TelemetryChar
               <Tooltip
                 formatter={(value: any, name: string) => [
                   `${value} km/h`,
-                  name === 'speedA' ? `${driverAName} Speed` : `${driverBName} Speed`,
+                  name === 'speedA'
+                    ? `${driverAName || 'Driver A'} Speed`
+                    : `${driverBName || 'Driver B'} Speed`,
                 ]}
                 labelFormatter={(label: any) => `Lap Distance: ${label}%`}
               />
-              <Line
-                yAxisId="speed"
-                type="monotone"
-                dataKey="speedA"
-                name="speedA"
-                stroke="#228be6"
-                strokeWidth={2}
-                dot={false}
-                isAnimationActive={false}
-              />
-              <Line
-                yAxisId="speed"
-                type="monotone"
-                dataKey="speedB"
-                name="speedB"
-                stroke="#fa5252"
-                strokeWidth={2}
-                dot={false}
-                isAnimationActive={false}
-              />
+              {driverAName && (
+                <Line
+                  yAxisId="speed"
+                  type="monotone"
+                  dataKey="speedA"
+                  name="speedA"
+                  stroke="#228be6"
+                  strokeWidth={2}
+                  dot={false}
+                  isAnimationActive={false}
+                />
+              )}
+              {driverBName && (
+                <Line
+                  yAxisId="speed"
+                  type="monotone"
+                  dataKey="speedB"
+                  name="speedB"
+                  stroke="#fa5252"
+                  strokeWidth={2}
+                  dot={false}
+                  isAnimationActive={false}
+                />
+              )}
             </ComposedChart>
           </ResponsiveContainer>
         </Box>
@@ -94,12 +104,16 @@ export function TelemetryChart({ data, driverAName, driverBName }: TelemetryChar
             Throttle (%) & Brake (%) Input Overlays
           </Text>
           <Group gap="xs">
-            <Badge color="teal" variant="light">
-              {driverAName} (Throttle/Brake)
-            </Badge>
-            <Badge color="orange" variant="light">
-              {driverBName} (Throttle/Brake)
-            </Badge>
+            {driverAName && (
+              <Badge color="teal" variant="light">
+                {driverAName} (Throttle/Brake)
+              </Badge>
+            )}
+            {driverBName && (
+              <Badge color="orange" variant="light">
+                {driverBName} (Throttle/Brake)
+              </Badge>
+            )}
           </Group>
         </Group>
 
@@ -111,34 +125,42 @@ export function TelemetryChart({ data, driverAName, driverBName }: TelemetryChar
               <YAxis domain={[0, 100]} unit="%" tick={{ fontSize: 12 }} />
               <Tooltip labelFormatter={(label: any) => `Lap Distance: ${label}%`} />
               <Legend />
-              <Bar
-                dataKey="throttleA"
-                name={`${driverAName} Throttle`}
-                fill="#20c997"
-                opacity={0.6}
-                isAnimationActive={false}
-              />
-              <Bar
-                dataKey="brakeA"
-                name={`${driverAName} Brake`}
-                fill="#ff6b6b"
-                opacity={0.6}
-                isAnimationActive={false}
-              />
-              <Bar
-                dataKey="throttleB"
-                name={`${driverBName} Throttle`}
-                fill="#fd7e14"
-                opacity={0.5}
-                isAnimationActive={false}
-              />
-              <Bar
-                dataKey="brakeB"
-                name={`${driverBName} Brake`}
-                fill="#845ef7"
-                opacity={0.5}
-                isAnimationActive={false}
-              />
+              {driverAName && (
+                <Bar
+                  dataKey="throttleA"
+                  name={`${driverAName} Throttle`}
+                  fill="#20c997"
+                  opacity={0.6}
+                  isAnimationActive={false}
+                />
+              )}
+              {driverAName && (
+                <Bar
+                  dataKey="brakeA"
+                  name={`${driverAName} Brake`}
+                  fill="#ff6b6b"
+                  opacity={0.6}
+                  isAnimationActive={false}
+                />
+              )}
+              {driverBName && (
+                <Bar
+                  dataKey="throttleB"
+                  name={`${driverBName} Throttle`}
+                  fill="#fd7e14"
+                  opacity={0.5}
+                  isAnimationActive={false}
+                />
+              )}
+              {driverBName && (
+                <Bar
+                  dataKey="brakeB"
+                  name={`${driverBName} Brake`}
+                  fill="#845ef7"
+                  opacity={0.5}
+                  isAnimationActive={false}
+                />
+              )}
             </ComposedChart>
           </ResponsiveContainer>
         </Box>
