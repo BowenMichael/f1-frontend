@@ -1,15 +1,29 @@
 import React from 'react';
-import { Box, Text, SimpleGrid, Card, Group, Badge } from '@mantine/core';
-import { Meeting } from '../../lib/middleware';
-import classes from './RaceExplorer.module.css';
+import { SimpleGrid, Card, Badge, Text, Group, Box, Paper } from '@mantine/core';
+import { Meeting } from '../../../lib/middleware';
+import classes from '../RaceExplorer.module.css';
 
-export interface MeetingGridProps {
+interface MeetingGridProps {
   meetings: Meeting[];
   selectedMeetingKey: number | null;
   onSelectMeeting: (meetingKey: number) => void;
+  season: string;
 }
 
-export function MeetingGrid({ meetings, selectedMeetingKey, onSelectMeeting }: MeetingGridProps) {
+export function MeetingGrid({
+  meetings,
+  selectedMeetingKey,
+  onSelectMeeting,
+  season,
+}: MeetingGridProps) {
+  if (meetings.length === 0) {
+    return (
+      <Paper p="xl" withBorder radius="md" ta="center">
+        <Text c="dimmed">No Grand Prix meetings found for the {season} season.</Text>
+      </Paper>
+    );
+  }
+
   return (
     <Box>
       <Text fw={700} size="md" mb="sm">

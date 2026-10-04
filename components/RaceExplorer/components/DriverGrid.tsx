@@ -1,23 +1,13 @@
 import React from 'react';
-import { SimpleGrid, Card, Group, Badge, Avatar, Box, Text, Paper } from '@mantine/core';
-import { Driver } from '../../lib/middleware';
-import classes from './RaceExplorer.module.css';
+import { SimpleGrid, Card, Avatar, Badge, Group, Text, Paper, Box } from '@mantine/core';
+import { Driver } from '../../../lib/middleware';
+import classes from '../RaceExplorer.module.css';
 
-export interface DriverLineupProps {
+interface DriverGridProps {
   drivers: Driver[];
-  loading?: boolean;
-  error?: string | null;
 }
 
-export function DriverLineup({ drivers, loading = false, error = null }: DriverLineupProps) {
-  if (loading) {
-    return null; // Handled by parent dashboard
-  }
-
-  if (error) {
-    return null; // Handled by parent dashboard
-  }
-
+export function DriverGrid({ drivers }: DriverGridProps) {
   if (drivers.length === 0) {
     return (
       <Paper p="xl" withBorder radius="md" ta="center">

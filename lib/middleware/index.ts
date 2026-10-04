@@ -229,3 +229,30 @@ export async function GETPositions(sessionKey: number, driverNumber?: number): P
   const url = `${API_URL}position?${queryString}`;
   return cachedFetch<Position[]>(url);
 }
+
+export async function GETCarData(
+  sessionKey: number,
+  driverNumber: number,
+  dateStart?: string,
+  dateEnd?: string
+): Promise<any[]> {
+  const params = new URLSearchParams();
+  params.append('session_key', sessionKey.toString());
+  params.append('driver_number', driverNumber.toString());
+
+  let queryString = params.toString();
+  if (dateStart) {
+    queryString += `&date>=${dateStart}`;
+  }
+  if (dateEnd) {
+    queryString += `&date<=${dateEnd}`;
+  }
+
+  const url = `${API_URL}car_data?${queryString}`;
+  try {
+    const data = await cachedFetch<any[]>(url);
+    return Array.isArray(data) ? data : [];
+  } catch (err) {
+    return [];
+  }
+}

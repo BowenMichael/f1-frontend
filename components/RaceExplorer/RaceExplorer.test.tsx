@@ -11,11 +11,20 @@ jest.mock('../../lib/middleware', () => ({
   GETStints: jest.fn().mockResolvedValue([]),
 }));
 
+jest.mock('../../utils/seasons', () => {
+  const actual = jest.requireActual('../../utils/seasons');
+  return {
+    ...actual,
+    getDefaultSeason: jest.fn(() => '2026'),
+    getAvailableSeasons: jest.fn(() => ['2026', '2025', '2024', '2023']),
+  };
+});
+
 const mockMeetings = [
   {
     meeting_key: 1200,
     meeting_name: 'Bahrain Grand Prix',
-    meeting_official_name: 'FORMULA 1 GULF AIR BAHRAIN GRAND PRIX 2023',
+    meeting_official_name: 'FORMULA 1 GULF AIR BAHRAIN GRAND PRIX 2026',
     location: 'Sakhir',
     country_key: 1,
     country_code: 'BRN',
@@ -23,14 +32,14 @@ const mockMeetings = [
     circuit_key: 1,
     circuit_short_name: 'Sakhir',
     gmt_offset: '03:00:00',
-    date_start: '2023-03-03T11:30:00+00:00',
-    date_end: '2023-03-05T15:00:00+00:00',
-    year: 2023,
+    date_start: '2026-03-03T11:30:00+00:00',
+    date_end: '2026-03-05T15:00:00+00:00',
+    year: 2026,
   },
   {
     meeting_key: 1201,
     meeting_name: 'Saudi Arabian Grand Prix',
-    meeting_official_name: 'FORMULA 1 STC SAUDI ARABIAN GRAND PRIX 2023',
+    meeting_official_name: 'FORMULA 1 STC SAUDI ARABIAN GRAND PRIX 2026',
     location: 'Jeddah',
     country_key: 2,
     country_code: 'KSA',
@@ -38,9 +47,9 @@ const mockMeetings = [
     circuit_key: 2,
     circuit_short_name: 'Jeddah',
     gmt_offset: '03:00:00',
-    date_start: '2023-03-17T13:30:00+00:00',
-    date_end: '2023-03-19T17:00:00+00:00',
-    year: 2023,
+    date_start: '2026-03-17T13:30:00+00:00',
+    date_end: '2026-03-19T17:00:00+00:00',
+    year: 2026,
   },
 ];
 
@@ -48,8 +57,8 @@ const mockSessions = [
   {
     session_key: 9001,
     session_name: 'Practice 1',
-    date_start: '2023-03-03T11:30:00+00:00',
-    date_end: '2023-03-03T12:30:00+00:00',
+    date_start: '2026-03-03T11:30:00+00:00',
+    date_end: '2026-03-03T12:30:00+00:00',
     gmt_offset: '03:00:00',
     session_type: 'Practice',
     meeting_key: 1200,
@@ -59,13 +68,13 @@ const mockSessions = [
     country_name: 'Bahrain',
     circuit_key: 1,
     circuit_short_name: 'Sakhir',
-    year: 2023,
+    year: 2026,
   },
   {
     session_key: 9002,
     session_name: 'Qualifying',
-    date_start: '2023-03-04T15:00:00+00:00',
-    date_end: '2023-03-04T16:00:00+00:00',
+    date_start: '2026-03-04T15:00:00+00:00',
+    date_end: '2026-03-04T16:00:00+00:00',
     gmt_offset: '03:00:00',
     session_type: 'Qualifying',
     meeting_key: 1200,
@@ -75,13 +84,13 @@ const mockSessions = [
     country_name: 'Bahrain',
     circuit_key: 1,
     circuit_short_name: 'Sakhir',
-    year: 2023,
+    year: 2026,
   },
   {
     session_key: 9003,
     session_name: 'Race',
-    date_start: '2023-03-05T15:00:00+00:00',
-    date_end: '2023-03-05T17:00:00+00:00',
+    date_start: '2026-03-05T15:00:00+00:00',
+    date_end: '2026-03-05T17:00:00+00:00',
     gmt_offset: '03:00:00',
     session_type: 'Race',
     meeting_key: 1200,
@@ -91,7 +100,7 @@ const mockSessions = [
     country_name: 'Bahrain',
     circuit_key: 1,
     circuit_short_name: 'Sakhir',
-    year: 2023,
+    year: 2026,
   },
 ];
 
@@ -122,7 +131,7 @@ const mockDrivers = [
     name_acronym: 'HAM',
     session_key: 9003,
     team_colour: '6CD3BF',
-    team_name: 'Mercedes',
+    team_name: 'Ferrari',
   },
 ];
 
@@ -147,7 +156,7 @@ describe('RaceExplorer component', () => {
     });
     expect(screen.getByText('Saudi Arabian Grand Prix')).toBeInTheDocument();
 
-    expect(middleware.GETMeetings).toHaveBeenCalledWith(2023);
+    expect(middleware.GETMeetings).toHaveBeenCalledWith(2026);
   });
 
   it('loads sessions and drivers when meeting is selected', async () => {
@@ -163,7 +172,7 @@ describe('RaceExplorer component', () => {
     expect(screen.getByText('Lewis HAMILTON')).toBeInTheDocument();
 
     expect(screen.getByText('Red Bull Racing')).toBeInTheDocument();
-    expect(screen.getByText('Mercedes')).toBeInTheDocument();
+    expect(screen.getByText('Ferrari')).toBeInTheDocument();
   });
 
   it('allows switching sessions and re-fetches drivers', async () => {
@@ -190,6 +199,23 @@ describe('RaceExplorer component', () => {
 
     await waitFor(() => {
       expect(screen.getByText('Network error')).toBeInTheDocument();
+    });
+  });
+
+  it('handles empty sessions and drivers gracefully for future/pending events', async () => {
+    (middleware.GETSessions as jest.Mock).mockResolvedValue([]);
+    (middleware.GETDrivers as jest.Mock).mockResolvedValue([]);
+
+    render(<RaceExplorer />);
+
+    await waitFor(() => {
+      expect(screen.getAllByText(/Bahrain Grand Prix/).length).toBeGreaterThan(0);
+    });
+
+    await waitFor(() => {
+      expect(
+        screen.getByText('No sessions scheduled or recorded yet for this meeting.')
+      ).toBeInTheDocument();
     });
   });
 });

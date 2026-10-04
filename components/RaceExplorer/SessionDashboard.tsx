@@ -11,7 +11,7 @@ import {
   Interval,
   Stint,
 } from '../../lib/middleware';
-import { DriverLineup } from './DriverLineup';
+import { DriverGrid } from './components/DriverGrid';
 import { Leaderboard } from '../Leaderboard/Leaderboard';
 
 export interface SessionDashboardProps {
@@ -112,7 +112,7 @@ export function SessionDashboard({ sessionKey }: SessionDashboardProps) {
           </Tabs.Panel>
 
           <Tabs.Panel value="lineup">
-            <DriverLineup drivers={drivers} loading={loading} error={error} />
+            <DriverGrid drivers={drivers} />
           </Tabs.Panel>
         </Tabs>
       )}
