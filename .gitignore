@@ -139,3 +139,11 @@ dist
 .DS_Store
 .vercel
 .env*
+
+# PR Visuals
+.pr-visuals/
+
+
+playwright-report/
+test-results/
+

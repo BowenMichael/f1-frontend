@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
+    "pr:capture": "playwright test -c playwright.visual.config.ts",
     "dev": "next dev",
     "build": "next build",
     "analyze": "ANALYZE=true next build",
@@ -31,6 +32,7 @@
   "devDependencies": {
     "@babel/core": "^7.23.2",
     "@next/eslint-plugin-next": "^14.0.1",
+    "@playwright/test": "^1.63.0",
     "@storybook/addon-essentials": "^7.5.2",
     "@storybook/addon-styling-webpack": "^0.0.5",
     "@storybook/blocks": "^7.5.2",
