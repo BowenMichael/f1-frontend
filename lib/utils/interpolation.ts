@@ -7,6 +7,22 @@ export function getTimestamp(dateStr: string): number {
   return new Date(dateStr).getTime();
 }
 
+export interface TimestampedLocationPoint extends LocationPoint {
+  _timestamp?: number;
+}
+
+/**
+ * Gets cached timestamp or computes and caches it on the point.
+ */
+export function getPointTimestamp(point: TimestampedLocationPoint): number {
+  if (point._timestamp !== undefined) {
+    return point._timestamp;
+  }
+  const ts = new Date(point.date).getTime();
+  point._timestamp = ts;
+  return ts;
+}
+
 /**
  * Hermite / Catmull-Rom spline interpolation between p1 and p2 using tangent points p0 and p3.
  */
@@ -24,15 +40,36 @@ export function catmullRom(p0: number, p1: number, p2: number, p3: number, t: nu
 }
 
 /**
- * Finds the index of the first point where timestamp >= targetTime via binary search.
+ * Finds the index of the first point where timestamp >= targetTime via binary search or hint.
  */
-export function findClosestPointIndex(points: LocationPoint[], targetTime: number): number {
+export function findClosestPointIndex(
+  points: TimestampedLocationPoint[],
+  targetTime: number,
+  hintIndex?: number
+): number {
+  const len = points.length;
+  if (len === 0) return 0;
+
+  // Optimized temporal coherence check using hint
+  if (hintIndex !== undefined && hintIndex >= 0 && hintIndex < len) {
+    const hintTime = getPointTimestamp(points[hintIndex]);
+    if (hintTime <= targetTime) {
+      // Check next few points linearly
+      const forwardLimit = Math.min(len, hintIndex + 5);
+      for (let i = hintIndex; i < forwardLimit; i++) {
+        if (getPointTimestamp(points[i]) >= targetTime) {
+          return i;
+        }
+      }
+    }
+  }
+
   let low = 0;
-  let high = points.length - 1;
+  let high = len - 1;
 
   while (low <= high) {
-    const mid = Math.floor((low + high) / 2);
-    const midTime = getTimestamp(points[mid].date);
+    const mid = (low + high) >> 1;
+    const midTime = getPointTimestamp(points[mid]);
 
     if (midTime === targetTime) {
       return mid;
@@ -51,14 +88,15 @@ export function findClosestPointIndex(points: LocationPoint[], targetTime: numbe
  * Interpolates coordinates for a given timestamp across location points using spline interpolation.
  */
 export function interpolateCarPosition(
-  points: LocationPoint[],
-  targetTime: number
+  points: TimestampedLocationPoint[],
+  targetTime: number,
+  hintIndex?: number
 ): NormalizedPoint | null {
   if (!points || points.length === 0) return null;
   if (points.length === 1) return { x: points[0].x, y: points[0].y };
 
-  const firstTime = getTimestamp(points[0].date);
-  const lastTime = getTimestamp(points[points.length - 1].date);
+  const firstTime = getPointTimestamp(points[0]);
+  const lastTime = getPointTimestamp(points[points.length - 1]);
 
   if (targetTime <= firstTime) {
     return { x: points[0].x, y: points[0].y };
@@ -68,14 +106,14 @@ export function interpolateCarPosition(
     return { x: last.x, y: last.y };
   }
 
-  const nextIdx = findClosestPointIndex(points, targetTime);
+  const nextIdx = findClosestPointIndex(points, targetTime, hintIndex);
   const prevIdx = Math.max(0, nextIdx - 1);
 
   const p1 = points[prevIdx];
   const p2 = points[Math.min(points.length - 1, nextIdx)];
 
-  const t1 = getTimestamp(p1.date);
-  const t2 = getTimestamp(p2.date);
+  const t1 = getPointTimestamp(p1);
+  const t2 = getPointTimestamp(p2);
 
   if (t2 <= t1) {
     return { x: p1.x, y: p1.y };

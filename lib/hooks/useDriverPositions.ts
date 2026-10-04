@@ -1,7 +1,7 @@
-import { useMemo } from 'react';
+import { useMemo, useRef } from 'react';
 import { LocationPoint, DriverState, TrackBoundingBox } from '../types/replay';
 import { Driver } from '../middleware';
-import { interpolateCarPosition } from '../utils/interpolation';
+import { interpolateCarPosition, findClosestPointIndex } from '../utils/interpolation';
 import { normalizeCoordinate } from '../utils/coordinate-mapper';
 
 export interface UseDriverPositionsOptions {
@@ -40,16 +40,25 @@ export function useDriverPositions({
     return map;
   }, [drivers]);
 
+  // Maintain index hint per driver for O(1) amortized sequential lookup
+  const driverIndexHintsRef = useRef<Map<number, number>>(new Map());
+
   return useMemo(() => {
     const result: DriverState[] = [];
+    const hints = driverIndexHintsRef.current;
 
     Object.keys(locationsByDriver).forEach((driverNumberStr) => {
       const driverNum = Number(driverNumberStr);
       const points = locationsByDriver[driverNum];
       if (!points || points.length === 0) return;
 
-      const interpolatedRaw = interpolateCarPosition(points, currentTime);
+      const currentHint = hints.get(driverNum) ?? 0;
+      const interpolatedRaw = interpolateCarPosition(points, currentTime, currentHint);
       if (!interpolatedRaw) return;
+
+      // Update the hint for this driver
+      const nextIdx = findClosestPointIndex(points, currentTime, currentHint);
+      hints.set(driverNum, Math.max(0, nextIdx - 1));
 
       const normalized = normalizeCoordinate(
         interpolatedRaw.x,

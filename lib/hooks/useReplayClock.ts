@@ -32,23 +32,28 @@ export function useReplayClock({ startTime, endTime, initialSpeed = 1 }: UseRepl
 
   const tick = useCallback(
     (now: number) => {
+      if (!isPlayingRef.current) {
+        lastFrameTimeRef.current = 0;
+        return;
+      }
+
       if (!lastFrameTimeRef.current) {
         lastFrameTimeRef.current = now;
       }
       const deltaMs = now - lastFrameTimeRef.current;
       lastFrameTimeRef.current = now;
 
-      if (isPlayingRef.current) {
-        const nextTime = currentTimeRef.current + deltaMs * speedRef.current;
-        if (nextTime >= endTime) {
-          currentTimeRef.current = endTime;
-          setCurrentTime(endTime);
-          setIsPlaying(false);
-        } else {
-          currentTimeRef.current = nextTime;
-          setCurrentTime(nextTime);
-        }
+      const nextTime = currentTimeRef.current + deltaMs * speedRef.current;
+      if (nextTime >= endTime) {
+        currentTimeRef.current = endTime;
+        setCurrentTime(endTime);
+        setIsPlaying(false);
+        lastFrameTimeRef.current = 0;
+        return;
       }
+
+      currentTimeRef.current = nextTime;
+      setCurrentTime(nextTime);
 
       animFrameIdRef.current = requestAnimationFrame(tick);
     },
@@ -56,14 +61,23 @@ export function useReplayClock({ startTime, endTime, initialSpeed = 1 }: UseRepl
   );
 
   useEffect(() => {
-    lastFrameTimeRef.current = 0;
-    animFrameIdRef.current = requestAnimationFrame(tick);
+    if (isPlaying) {
+      lastFrameTimeRef.current = 0;
+      animFrameIdRef.current = requestAnimationFrame(tick);
+    } else {
+      if (animFrameIdRef.current) {
+        cancelAnimationFrame(animFrameIdRef.current);
+        animFrameIdRef.current = null;
+      }
+      lastFrameTimeRef.current = 0;
+    }
+
     return () => {
       if (animFrameIdRef.current) {
         cancelAnimationFrame(animFrameIdRef.current);
       }
     };
-  }, [tick]);
+  }, [isPlaying, tick]);
 
   const togglePlay = useCallback(() => {
     setIsPlaying((prev) => {

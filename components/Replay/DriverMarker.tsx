@@ -5,7 +5,7 @@ export interface DriverMarkerProps {
   driver: DriverState;
 }
 
-export function DriverMarker({ driver }: DriverMarkerProps) {
+function DriverMarkerComponent({ driver }: DriverMarkerProps) {
   const { x, y, acronym, teamColour } = driver;
 
   return (
@@ -47,3 +47,13 @@ export function DriverMarker({ driver }: DriverMarkerProps) {
     </g>
   );
 }
+
+export const DriverMarker = React.memo(
+  DriverMarkerComponent,
+  (prevProps, nextProps) =>
+    prevProps.driver.x === nextProps.driver.x &&
+    prevProps.driver.y === nextProps.driver.y &&
+    prevProps.driver.acronym === nextProps.driver.acronym &&
+    prevProps.driver.teamColour === nextProps.driver.teamColour &&
+    prevProps.driver.driver_number === nextProps.driver.driver_number
+);

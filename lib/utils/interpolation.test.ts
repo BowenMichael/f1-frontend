@@ -73,4 +73,10 @@ describe('interpolation', () => {
     const posAfter = interpolateCarPosition(mockPoints, tAfter);
     expect(posAfter).toEqual({ x: 300, y: 500 });
   });
+
+  it('uses hintIndex correctly for sequential lookup', () => {
+    const t1 = new Date('2023-09-03T13:00:01.000Z').getTime();
+    expect(findClosestPointIndex(mockPoints, t1, 0)).toBe(1);
+    expect(findClosestPointIndex(mockPoints, t1, 1)).toBe(1);
+  });
 });
