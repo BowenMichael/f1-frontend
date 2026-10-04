@@ -12,7 +12,13 @@ const customJestConfig = {
   },
   testEnvironment: 'jest-environment-jsdom',
   testMatch: ['**/*.test.[jt]s?(x)'],
-  testPathIgnorePatterns: ['[\\\\/]node_modules[\\\\/]', '[\\\\/]tests[\\\\/]', '[\\\\/]test-utils[\\\\/]'],
+  testPathIgnorePatterns: [
+    '[\\\\/]node_modules[\\\\/]',
+    '[\\\\/]tests[\\\\/]',
+    '[\\\\/]test-utils[\\\\/]',
+    '<rootDir>/\\.worktrees/',
+  ],
+  modulePathIgnorePatterns: ['<rootDir>/\\.worktrees/'],
 };
 
 module.exports = createJestConfig(customJestConfig);
