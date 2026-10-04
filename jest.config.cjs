@@ -11,7 +11,8 @@ const customJestConfig = {
     '^@/pages/(.*)$': '<rootDir>/pages/$1',
   },
   testEnvironment: 'jest-environment-jsdom',
-  testPathIgnorePatterns: ['<rootDir>/node_modules/', '<rootDir>/tests/'],
+  testMatch: ['**/*.test.[jt]s?(x)'],
+  testPathIgnorePatterns: ['[\\\\/]node_modules[\\\\/]', '[\\\\/]tests[\\\\/]', '[\\\\/]test-utils[\\\\/]'],
 };
 
 module.exports = createJestConfig(customJestConfig);

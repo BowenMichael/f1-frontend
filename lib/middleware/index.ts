@@ -250,4 +250,3 @@ export async function GETCarData(
   const url = `${API_URL}car_data?${queryString}`;
   return cachedFetch<any[]>(url);
 }
-

@@ -3,7 +3,8 @@ import { CarData, TelemetryComparisonPoint } from '../models/telemetry';
 
 export function getFastestLap(laps: Lap[], driverNumber: number): Lap | null {
   const driverLaps = laps.filter(
-    (l) => l.driver_number === driverNumber && l.lap_duration && l.lap_duration > 0 && !l.is_pit_out_lap
+    (l) =>
+      l.driver_number === driverNumber && l.lap_duration && l.lap_duration > 0 && !l.is_pit_out_lap
   );
   if (driverLaps.length === 0) return null;
   return driverLaps.reduce((fastest, current) => {

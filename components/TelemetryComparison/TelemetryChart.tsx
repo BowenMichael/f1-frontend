@@ -55,12 +55,7 @@ export function TelemetryChart({ data, driverAName, driverBName }: TelemetryChar
                 tick={{ fontSize: 12 }}
                 label={{ value: 'Lap Distance (%)', position: 'insideBottomRight', offset: -5 }}
               />
-              <YAxis
-                yAxisId="speed"
-                domain={[50, 350]}
-                unit=" km/h"
-                tick={{ fontSize: 12 }}
-              />
+              <YAxis yAxisId="speed" domain={[50, 350]} unit=" km/h" tick={{ fontSize: 12 }} />
               <Tooltip
                 formatter={(value: any, name: string) => [
                   `${value} km/h`,
@@ -114,9 +109,7 @@ export function TelemetryChart({ data, driverAName, driverBName }: TelemetryChar
               <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
               <XAxis dataKey="distancePercent" unit="%" tick={{ fontSize: 12 }} />
               <YAxis domain={[0, 100]} unit="%" tick={{ fontSize: 12 }} />
-              <Tooltip
-                labelFormatter={(label: any) => `Lap Distance: ${label}%`}
-              />
+              <Tooltip labelFormatter={(label: any) => `Lap Distance: ${label}%`} />
               <Legend />
               <Bar
                 dataKey="throttleA"
